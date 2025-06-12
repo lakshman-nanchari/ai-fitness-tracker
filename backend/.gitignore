@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+
+# Environment Variables
+.env
+
+# MySQL dumps (optional)
+*.sql
+
+# Django stuff:
+*.sqlite3
+db.sqlite3
+
+# VS Code / PyCharm
+.vscode/
+.idea/
