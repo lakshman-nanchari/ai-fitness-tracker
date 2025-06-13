@@ -5,15 +5,15 @@ export default function Register() {
   const [form, setForm] = useState({ email: '', username: '', password: '' });
   const [message, setMessage] = useState('');
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     try {
-      const res = await API.post('/api/register/', form);
+      const res = await API.post('api/users/register/', form); // ✅ fixed path
       setMessage(res.data.message);
       setForm({ email: '', username: '', password: '' });
     } catch (err) {
