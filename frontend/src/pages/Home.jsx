@@ -1,29 +1,38 @@
-// src/pages/Home.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaSun, FaMoon } from "react-icons/fa";
 
 const Home = () => {
   const [isDark, setIsDark] = useState(false);
+  const [bgImage, setBgImage] = useState("/images/gym/3d-gym-equipment.jpg");
 
   useEffect(() => {
     const root = document.documentElement;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    isDark ? root.classList.add("dark") : root.classList.remove("dark");
   }, [isDark]);
+
+  useEffect(() => {
+    const updateBg = () => {
+      if (window.innerWidth < 640) {
+        setBgImage("/images/gym/mobile-hero.jpg");
+      } else {
+        setBgImage("/images/gym/3d-gym-equipment.jpg");
+      }
+    };
+
+    updateBg(); // Set on initial load
+    window.addEventListener("resize", updateBg); // Update on resize
+    return () => window.removeEventListener("resize", updateBg);
+  }, []);
 
   return (
     <div className="bg-white dark:bg-black min-h-screen text-gray-900 dark:text-white transition duration-500">
-
       {/* Hero Section */}
       <div
         className="relative h-[90vh] bg-cover bg-center flex items-center justify-center px-6"
-        style={{ backgroundImage: "url('/images/gym/3d-gym-equipment.jpg')" }}
+        style={{ backgroundImage: `url(${bgImage})` }}
       >
-        {/* Theme Toggle Inside Hero - top-right corner */}
+        {/* Theme Toggle Inside Hero */}
         <div className="absolute top-6 right-6">
           <button
             onClick={() => setIsDark(!isDark)}
@@ -66,7 +75,7 @@ const Home = () => {
               className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden transition hover:shadow-xl"
             >
               <div
-                className="h-48 bg-cover bg-center"
+                className="h-55 bg-cover bg-center"
                 style={{ backgroundImage: `url(${icon})` }}
               />
               <div className="p-6">
