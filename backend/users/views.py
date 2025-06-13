@@ -7,10 +7,14 @@ from drf_yasg import openapi
 from .serializers import RegisterSerializer, EmailSerializer, OTPVerifySerializer
 from .utils import send_otp_email
 
+
 @swagger_auto_schema(
     method='post',
     request_body=RegisterSerializer,
-    responses={201: openapi.Response("User registered successfully"), 400: "Validation Error"}
+    responses={
+        201: openapi.Response("User registered successfully"),
+        400: "Validation error"
+    }
 )
 @api_view(['POST'])
 def register(request):
@@ -24,7 +28,10 @@ def register(request):
 @swagger_auto_schema(
     method='post',
     request_body=EmailSerializer,
-    responses={200: openapi.Response("OTP sent to email"), 400: "Validation Error"}
+    responses={
+        200: openapi.Response("OTP sent to email"),
+        400: "Validation error"
+    }
 )
 @api_view(['POST'])
 def request_otp(request):
@@ -39,7 +46,10 @@ def request_otp(request):
 @swagger_auto_schema(
     method='post',
     request_body=OTPVerifySerializer,
-    responses={200: openapi.Response("OTP verified successfully"), 400: "Validation Error"}
+    responses={
+        200: openapi.Response("OTP verified successfully"),
+        400: "Invalid OTP or Email"
+    }
 )
 @api_view(['POST'])
 def verify_otp(request):
@@ -49,5 +59,5 @@ def verify_otp(request):
         otp.is_used = True
         otp.save()
         user = serializer.validated_data['user']
-        return Response({"message": "OTP verified successfully", "user": user.email})
+        return Response({"message": "OTP verified successfully", "user": user.email}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
