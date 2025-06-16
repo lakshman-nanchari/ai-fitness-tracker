@@ -54,6 +54,10 @@ class OTPVerifySerializer(serializers.Serializer):
         data['user'], data['otp'] = user, otp
         return data
 
+from rest_framework import serializers
+from django.utils import timezone
+from datetime import timedelta
+
 class PasswordChangeSerializer(serializers.Serializer):
     old_password = serializers.CharField()
     new_password = serializers.CharField(min_length=6)
@@ -63,6 +67,14 @@ class PasswordChangeSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Current password is incorrect")
         return value
+
+    def validate(self, data):
+        user = self.context['user']
+        last_change = user.last_password_change
+        if last_change and (timezone.now() - last_change) < timedelta(days=1):
+            raise serializers.ValidationError("You can only change your password once per day.")
+        return data
+
 
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -83,3 +95,30 @@ class PasswordResetSerializer(serializers.Serializer):
         )
         send_otp_email(user.email, code)
         return otp
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField()
+    new_password = serializers.CharField(min_length=6)
+
+    def validate(self, data):
+        email = data.get("email")
+        otp_code = data.get("otp")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User does not exist.")
+
+        try:
+            otp = OTP.objects.filter(user=user, code=otp_code, is_used=False).latest('created_at')
+        except OTP.DoesNotExist:
+            raise serializers.ValidationError("Invalid or expired OTP.")
+
+        if otp.expires_at < timezone.now():
+            raise serializers.ValidationError("OTP has expired.")
+
+        data['user'] = user
+        data['otp_obj'] = otp
+        return data
