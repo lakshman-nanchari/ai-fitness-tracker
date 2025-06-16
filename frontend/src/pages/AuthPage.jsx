@@ -8,6 +8,8 @@ export default function AuthPage() {
   const [otpForm, setOtpForm] = useState({ email: '', otp: '' });
   const [message, setMessage] = useState('');
   const [quoteIndex, setQuoteIndex] = useState(0);
+  const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const quotes = [
     "Push yourself, because no one else is going to do it for you.",
@@ -30,8 +32,11 @@ export default function AuthPage() {
   const handleSubmit = async (e, type) => {
     e.preventDefault();
     setMessage('');
+    setLoading(true);
+
     try {
       let res;
+
       if (type === 'register') {
         res = await API.post('api/users/register/', registerForm);
         setFormType('login');
@@ -40,14 +45,23 @@ export default function AuthPage() {
         res = await API.post('api/users/login/', loginForm);
       } else if (type === 'otp') {
         res = await API.post('api/users/verify-otp/', otpForm);
+      } else if (type === 'send-otp') {
+        res = await API.post('api/users/send-otp/', { email: otpForm.email });
+        setOtpSent(true);
       }
+
       setMessage(res.data.message || 'Success');
     } catch (err) {
       setMessage(
         err.response?.data?.email?.[0] ||
+        err.response?.data?.username?.[0] ||
+        err.response?.data?.password?.[0] ||
+        err.response?.data?.non_field_errors?.[0] ||
         err.response?.data?.detail ||
         'Something went wrong'
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,7 +69,7 @@ export default function AuthPage() {
     "w-full p-3 border border-gray-300 dark:border-gray-700 bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white placeholder-gray-600 dark:placeholder-gray-400 rounded";
 
   const buttonClass =
-    "w-full py-2 px-4 bg-black dark:bg-yellow-400 text-white dark:text-black font-semibold rounded hover:bg-[#f4c95d] dark:hover:bg-yellow-300 transition";
+    "w-full py-2 px-4 bg-black dark:bg-yellow-400 text-white dark:text-black font-semibold rounded hover:bg-[#f4c95d] dark:hover:bg-yellow-300 transition disabled:opacity-50";
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#e0d7c8] dark:bg-gray-950 transition-all duration-300">
@@ -82,7 +96,9 @@ export default function AuthPage() {
                 <input name="email" type="email" placeholder="Email" value={registerForm.email} onChange={handleChange(setRegisterForm)} className={inputClass} required />
                 <input name="username" placeholder="Username" value={registerForm.username} onChange={handleChange(setRegisterForm)} className={inputClass} required />
                 <input name="password" type="password" placeholder="Password" value={registerForm.password} onChange={handleChange(setRegisterForm)} className={inputClass} required />
-                <button type="submit" className={buttonClass}>Register</button>
+                <button type="submit" className={buttonClass} disabled={loading}>
+                  {loading ? 'Please wait...' : 'Register'}
+                </button>
               </form>
               <p className="mt-4 text-sm text-center">
                 Already have an account? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('login')}>Login</span>
@@ -96,10 +112,12 @@ export default function AuthPage() {
               <form onSubmit={(e) => handleSubmit(e, 'login')} className="space-y-4">
                 <input name="email" type="email" placeholder="Email" value={loginForm.email} onChange={handleChange(setLoginForm)} className={inputClass} required />
                 <input name="password" type="password" placeholder="Password" value={loginForm.password} onChange={handleChange(setLoginForm)} className={inputClass} required />
-                <button type="submit" className={buttonClass}>Login</button>
+                <button type="submit" className={buttonClass} disabled={loading}>
+                  {loading ? 'Please wait...' : 'Login'}
+                </button>
               </form>
               <p className="mt-4 text-sm text-center">
-                Forgot password? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('otp')}>Login with OTP</span>
+                Forgot password? <span className="text-blue-500 cursor-pointer" onClick={() => { setFormType('otp'); setOtpSent(false); }}>Login with OTP</span>
               </p>
               <p className="mt-2 text-sm text-center">
                 Don't have an account? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('register')}>Register</span>
@@ -110,10 +128,32 @@ export default function AuthPage() {
           {formType === 'otp' && (
             <>
               <h2 className="text-2xl font-bold mb-4">OTP Login</h2>
-              <form onSubmit={(e) => handleSubmit(e, 'otp')} className="space-y-4">
-                <input name="email" type="email" placeholder="Email" value={otpForm.email} onChange={handleChange(setOtpForm)} className={inputClass} required />
-                <input name="otp" type="text" placeholder="Enter OTP" value={otpForm.otp} onChange={handleChange(setOtpForm)} className={inputClass} required />
-                <button type="submit" className={buttonClass}>Login with OTP</button>
+              <form onSubmit={(e) => handleSubmit(e, otpSent ? 'otp' : 'send-otp')} className="space-y-4">
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                  value={otpForm.email}
+                  onChange={handleChange(setOtpForm)}
+                  className={inputClass}
+                  required
+                />
+
+                {otpSent && (
+                  <input
+                    name="otp"
+                    type="text"
+                    placeholder="Enter OTP"
+                    value={otpForm.otp}
+                    onChange={handleChange(setOtpForm)}
+                    className={inputClass}
+                    required
+                  />
+                )}
+
+                <button type="submit" className={buttonClass} disabled={loading}>
+                  {loading ? 'Please wait...' : otpSent ? 'Login with OTP' : 'Send OTP'}
+                </button>
               </form>
               <p className="mt-4 text-sm text-center">
                 Prefer password? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('login')}>Back to Login</span>
