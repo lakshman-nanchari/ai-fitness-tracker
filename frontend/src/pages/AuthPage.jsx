@@ -1,8 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/axios';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import 'react-toastify/dist/ReactToastify.css';
+
+// 🔐 Password input with visibility toggle
+const PasswordField = ({ name, value, onChange, placeholder, required = true }) => {
+  const [show, setShow] = useState(false);
+  const inputRef = useRef(null);
+  const prevShow = useRef(show);
+
+  useEffect(() => {
+    if (prevShow.current !== show && inputRef.current === document.activeElement) {
+      const pos = inputRef.current.selectionStart;
+      inputRef.current.focus();
+      inputRef.current.setSelectionRange(pos, pos);
+    }
+    prevShow.current = show;
+  }, [show]);
+
+  return (
+    <div className="relative">
+      <input
+        ref={inputRef}
+        name={name}
+        type={show ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full p-3 border border-gray-300 dark:border-gray-700 bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white placeholder-gray-600 dark:placeholder-gray-400 rounded"
+      />
+      <div className="absolute top-3 right-3 cursor-pointer text-gray-600 dark:text-gray-300" onClick={() => setShow(!show)}>
+        {show ? <FiEyeOff /> : <FiEye />}
+      </div>
+    </div>
+  );
+};
 
 export default function AuthPage() {
   const [formType, setFormType] = useState('register');
@@ -62,7 +97,6 @@ export default function AuthPage() {
   const handleSubmit = async (e, type) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       let res;
 
@@ -111,7 +145,6 @@ export default function AuthPage() {
           headers: { Authorization: `Bearer ${access}` }
         });
 
-        // Auto-login
         const loginRes = await API.post('api/users/login/', {
           email: resetForm.email,
           password: resetForm.newPassword
@@ -167,13 +200,14 @@ export default function AuthPage() {
 
       <div className="md:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white shadow-xl rounded-2xl p-8">
+
           {formType === 'register' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Create Account</h2>
               <form onSubmit={(e) => handleSubmit(e, 'register')} className="space-y-4">
                 <input name="email" type="email" placeholder="Email" value={registerForm.email} onChange={handleChange(setRegisterForm)} className={inputClass} required />
                 <input name="username" placeholder="Username" value={registerForm.username} onChange={handleChange(setRegisterForm)} className={inputClass} required />
-                <input name="password" type="password" placeholder="Password" value={registerForm.password} onChange={handleChange(setRegisterForm)} className={inputClass} required />
+                <PasswordField name="password" placeholder="Password" value={registerForm.password} onChange={handleChange(setRegisterForm)} />
                 <button type="submit" className={buttonClass} disabled={loading}>{loading ? 'Please wait...' : 'Register'}</button>
               </form>
               <p className="mt-4 text-sm text-center">Already have an account? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('login')}>Login</span></p>
@@ -185,7 +219,7 @@ export default function AuthPage() {
               <h2 className="text-2xl font-bold mb-4">Login</h2>
               <form onSubmit={(e) => handleSubmit(e, 'login')} className="space-y-4">
                 <input name="email" type="email" placeholder="Email" value={loginForm.email} onChange={handleChange(setLoginForm)} className={inputClass} required />
-                <input name="password" type="password" placeholder="Password" value={loginForm.password} onChange={handleChange(setLoginForm)} className={inputClass} required />
+                <PasswordField name="password" placeholder="Password" value={loginForm.password} onChange={handleChange(setLoginForm)} />
                 <button type="submit" className={buttonClass} disabled={loading}>{loading ? 'Please wait...' : 'Login'}</button>
               </form>
               <p className="mt-4 text-sm text-center">Forgot password? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('reset')}>Reset it</span></p>
@@ -218,7 +252,7 @@ export default function AuthPage() {
                   <input name="otp" type="text" placeholder="Enter OTP" value={resetForm.otp} onChange={handleChange(setResetForm)} className={inputClass} required />
                 )}
                 {resetVerified && (
-                  <input name="newPassword" type="password" placeholder="New Password" value={resetForm.newPassword} onChange={handleChange(setResetForm)} className={inputClass} required />
+                  <PasswordField name="newPassword" placeholder="New Password" value={resetForm.newPassword} onChange={handleChange(setResetForm)} />
                 )}
                 <button type="submit" className={buttonClass} disabled={loading}>
                   {loading ? 'Please wait...' :
@@ -235,8 +269,8 @@ export default function AuthPage() {
             <>
               <h2 className="text-2xl font-bold mb-4">Change Password</h2>
               <form onSubmit={(e) => handleSubmit(e, 'change-password')} className="space-y-4">
-                <input name="oldPassword" type="password" placeholder="Current Password" value={changeForm.oldPassword} onChange={handleChange(setChangeForm)} className={inputClass} required />
-                <input name="newPassword" type="password" placeholder="New Password" value={changeForm.newPassword} onChange={handleChange(setChangeForm)} className={inputClass} required />
+                <PasswordField name="oldPassword" placeholder="Current Password" value={changeForm.oldPassword} onChange={handleChange(setChangeForm)} />
+                <PasswordField name="newPassword" placeholder="New Password" value={changeForm.newPassword} onChange={handleChange(setChangeForm)} />
                 <button type="submit" className={buttonClass} disabled={loading}>{loading ? 'Please wait...' : 'Change Password'}</button>
               </form>
             </>
