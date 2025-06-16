@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/axios';
 import { toast } from 'react-toastify';
+import { jwtDecode } from 'jwt-decode'; // ✅ FIXED: named import
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function AuthPage() {
@@ -31,6 +32,30 @@ export default function AuthPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const checkTokenExpiry = () => {
+      const token = localStorage.getItem('access');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          const now = Date.now() / 1000;
+          if (decoded.exp < now) {
+            toast.info('Session expired. Please login again.');
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
+            setFormType('login');
+          }
+        } catch {
+          toast.error('Invalid session. Please login again.');
+          localStorage.removeItem('access');
+          localStorage.removeItem('refresh');
+          setFormType('login');
+        }
+      }
+    };
+    checkTokenExpiry();
+  }, [formType]);
+
   const handleChange = (setter) => (e) =>
     setter((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -50,7 +75,7 @@ export default function AuthPage() {
       } else if (type === 'login') {
         res = await API.post('api/users/login/', loginForm);
         toast.success('Login successful!');
-        localStorage.setItem('access', res.data.access); // save JWT
+        localStorage.setItem('access', res.data.access);
         localStorage.setItem('refresh', res.data.refresh);
 
       } else if (type === 'otp-login-send') {
@@ -75,13 +100,13 @@ export default function AuthPage() {
           code: resetForm.otp,
         });
         toast.success('OTP verified. Set new password.');
-        localStorage.setItem('reset_access', verifyRes.data.access); // temporary
+        localStorage.setItem('reset_access', verifyRes.data.access);
         setResetVerified(true);
 
       } else if (type === 'reset-new-password') {
         const access = localStorage.getItem('reset_access');
         res = await API.post('api/users/change-password/', {
-          old_password: 'dummy', // backend skips this if not used
+          old_password: 'dummy',
           new_password: resetForm.newPassword
         }, { headers: { Authorization: `Bearer ${access}` } });
 
@@ -106,6 +131,7 @@ export default function AuthPage() {
         err.response?.data?.email?.[0] ||
         err.response?.data?.username?.[0] ||
         err.response?.data?.password?.[0] ||
+        err.response?.data?.old_password?.[0] ||
         err.response?.data?.non_field_errors?.[0] ||
         err.response?.data?.detail ||
         err.response?.data?.message ||
@@ -121,7 +147,6 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#e0d7c8] dark:bg-gray-950 transition-all duration-300">
-      {/* Quote Side */}
       <div className="md:w-1/2 min-h-[400px] relative bg-cover bg-center flex items-center justify-center"
         style={{ backgroundImage: `url('/images/gym/register-bg.jpg')` }}>
         <div className="absolute inset-0" />
@@ -130,10 +155,9 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* Form Side */}
       <div className="md:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white shadow-xl rounded-2xl p-8">
-          {/* Register */}
+          {/* REGISTER */}
           {formType === 'register' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Create Account</h2>
@@ -147,7 +171,7 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* Login */}
+          {/* LOGIN */}
           {formType === 'login' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Login</h2>
@@ -161,7 +185,7 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* OTP Login */}
+          {/* OTP LOGIN */}
           {formType === 'otp' && (
             <>
               <h2 className="text-2xl font-bold mb-4">OTP Login</h2>
@@ -176,7 +200,7 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* Reset Password */}
+          {/* RESET PASSWORD */}
           {formType === 'reset' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
@@ -201,7 +225,7 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* Change Password (after login) */}
+          {/* CHANGE PASSWORD */}
           {formType === 'change' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Change Password</h2>
