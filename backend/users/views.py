@@ -5,21 +5,17 @@ from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib.auth import authenticate
-
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from .serializers import (
     RegisterSerializer, EmailSerializer,
     OTPVerifySerializer, PasswordChangeSerializer, PasswordResetSerializer
 )
 from .utils import send_otp_email
-from .models import OTP
-from datetime import timedelta
-from django.utils import timezone
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {'refresh': str(refresh), 'access': str(refresh.access_token)}
-
 
 @swagger_auto_schema(method='post', request_body=RegisterSerializer)
 @api_view(['POST'])
@@ -29,7 +25,6 @@ def register(request):
         serializer.save()
         return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @swagger_auto_schema(
     method='post',
@@ -48,7 +43,6 @@ def login_view(request):
         return Response({'message': 'Login successful', **get_tokens_for_user(user)}, status=status.HTTP_200_OK)
     return Response({'detail': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
-
 @swagger_auto_schema(method='post', request_body=EmailSerializer)
 @api_view(['POST'])
 def request_otp(request):
@@ -58,7 +52,6 @@ def request_otp(request):
         send_otp_email(otp.user.email, otp.code)
         return Response({"message": "OTP sent to email"}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @swagger_auto_schema(method='post', request_body=OTPVerifySerializer)
 @api_view(['POST'])
@@ -72,7 +65,6 @@ def verify_otp(request):
         return Response({'message': 'OTP verified', **get_tokens_for_user(user)}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 @swagger_auto_schema(method='post', request_body=PasswordChangeSerializer)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -83,7 +75,6 @@ def change_password(request):
         request.user.save()
         return Response({'message': 'Password changed'}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @swagger_auto_schema(method='post', request_body=PasswordResetSerializer)
 @api_view(['POST'])
