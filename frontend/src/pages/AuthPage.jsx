@@ -44,7 +44,10 @@ export default function AuthPage() {
       } else if (type === 'login') {
         res = await API.post('api/users/login/', loginForm);
       } else if (type === 'otp') {
-        res = await API.post('api/users/verify-otp/', otpForm);
+          res = await API.post('api/users/verify-otp/', {
+            email: otpForm.email,
+            code: otpForm.otp,  
+          });
       } else if (type === 'send-otp') {
         res = await API.post('api/users/send-otp/', { email: otpForm.email });
         setOtpSent(true);
