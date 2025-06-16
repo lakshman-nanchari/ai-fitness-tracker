@@ -1,9 +1,13 @@
 from rest_framework import serializers
-from .models import User, OTP
-from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth import get_user_model
+from django.utils.crypto import get_random_string
+from .models import OTP
 from .utils import send_otp_email
+
+User = get_user_model()
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
@@ -18,6 +22,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
 
 class EmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -37,6 +42,7 @@ class EmailSerializer(serializers.Serializer):
             is_used=False
         )
 
+
 class OTPVerifySerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6)
@@ -54,13 +60,10 @@ class OTPVerifySerializer(serializers.Serializer):
         data['user'], data['otp'] = user, otp
         return data
 
-from rest_framework import serializers
-from django.utils import timezone
-from datetime import timedelta
 
 class PasswordChangeSerializer(serializers.Serializer):
-    old_password = serializers.CharField()
-    new_password = serializers.CharField(min_length=6)
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=6)
 
     def validate_old_password(self, value):
         user = self.context['user']
@@ -100,19 +103,16 @@ class PasswordResetSerializer(serializers.Serializer):
 class PasswordResetConfirmSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
-    new_password = serializers.CharField(min_length=6)
+    new_password = serializers.CharField(write_only=True, min_length=6)
 
     def validate(self, data):
-        email = data.get("email")
-        otp_code = data.get("otp")
-
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email=data['email'])
         except User.DoesNotExist:
             raise serializers.ValidationError("User does not exist.")
 
         try:
-            otp = OTP.objects.filter(user=user, code=otp_code, is_used=False).latest('created_at')
+            otp = OTP.objects.filter(user=user, code=data['otp'], is_used=False).latest('created_at')
         except OTP.DoesNotExist:
             raise serializers.ValidationError("Invalid or expired OTP.")
 

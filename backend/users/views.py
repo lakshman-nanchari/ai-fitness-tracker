@@ -98,7 +98,7 @@ def change_password(request):
 def reset_password(request):
     serializer = PasswordResetSerializer(data=request.data)
     if serializer.is_valid():
-        otp = serializer.create_otp_and_send()
+        serializer.create_otp_and_send()
         return Response({'message': 'Reset OTP sent'}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
