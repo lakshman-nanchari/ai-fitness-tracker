@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
 import Navbar from './components/Navbar';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -10,8 +12,17 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/auth" element={<AuthPage />} /> {/* ✅ Added properly */}
+        <Route path="/auth" element={<AuthPage />} />
       </Routes>
+
+      {/* ✅ Toast Container to show success/error messages */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        pauseOnHover
+        draggable
+        theme="colored" // or 'dark', 'light'
+      />
     </div>
   );
 }

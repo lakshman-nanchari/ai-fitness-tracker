@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AuthPage() {
   const [formType, setFormType] = useState('register');
   const [registerForm, setRegisterForm] = useState({ email: '', username: '', password: '' });
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [otpForm, setOtpForm] = useState({ email: '', otp: '' });
-  const [message, setMessage] = useState('');
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,6 @@ export default function AuthPage() {
 
   const handleSubmit = async (e, type) => {
     e.preventDefault();
-    setMessage('');
     setLoading(true);
 
     try {
@@ -44,18 +44,18 @@ export default function AuthPage() {
       } else if (type === 'login') {
         res = await API.post('api/users/login/', loginForm);
       } else if (type === 'otp') {
-          res = await API.post('api/users/verify-otp/', {
-            email: otpForm.email,
-            code: otpForm.otp,  
-          });
+        res = await API.post('api/users/verify-otp/', {
+          email: otpForm.email,
+          code: otpForm.otp,
+        });
       } else if (type === 'send-otp') {
         res = await API.post('api/users/send-otp/', { email: otpForm.email });
         setOtpSent(true);
       }
 
-      setMessage(res.data.message || 'Success');
+      toast.success(res.data.message || 'Success!');
     } catch (err) {
-      setMessage(
+      toast.error(
         err.response?.data?.email?.[0] ||
         err.response?.data?.username?.[0] ||
         err.response?.data?.password?.[0] ||
@@ -79,9 +79,7 @@ export default function AuthPage() {
       {/* Quote Section */}
       <div
         className="md:w-1/2 min-h-[400px] relative bg-cover bg-center flex items-center justify-center"
-        style={{
-          backgroundImage: `url('/images/gym/register-bg.jpg')`
-        }}
+        style={{ backgroundImage: `url('/images/gym/register-bg.jpg')` }}
       >
         <div className="absolute inset-0" />
         <div className="relative z-10 max-w-md text-center text-shadow-black space-y-6 px-6">
@@ -162,10 +160,6 @@ export default function AuthPage() {
                 Prefer password? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('login')}>Back to Login</span>
               </p>
             </>
-          )}
-
-          {message && (
-            <p className="mt-4 text-sm text-center text-red-600 dark:text-red-400">{message}</p>
           )}
         </div>
       </div>
