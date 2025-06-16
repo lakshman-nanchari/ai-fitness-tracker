@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/axios';
 import { toast } from 'react-toastify';
-import { jwtDecode } from 'jwt-decode'; // ✅ FIXED: named import
+import { jwtDecode } from 'jwt-decode';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function AuthPage() {
@@ -106,12 +106,22 @@ export default function AuthPage() {
       } else if (type === 'reset-new-password') {
         const access = localStorage.getItem('reset_access');
         res = await API.post('api/users/change-password/', {
-          old_password: 'dummy',
           new_password: resetForm.newPassword
-        }, { headers: { Authorization: `Bearer ${access}` } });
+        }, {
+          headers: { Authorization: `Bearer ${access}` }
+        });
 
-        toast.success(res.data.message || 'Password reset!');
-        setFormType('login');
+        // Auto-login
+        const loginRes = await API.post('api/users/login/', {
+          email: resetForm.email,
+          password: resetForm.newPassword
+        });
+
+        localStorage.setItem('access', loginRes.data.access);
+        localStorage.setItem('refresh', loginRes.data.refresh);
+
+        toast.success('Password reset and logged in!');
+        setFormType('change');
         setResetForm({ email: '', otp: '', newPassword: '' });
         setResetOtpSent(false);
         setResetVerified(false);
@@ -157,7 +167,6 @@ export default function AuthPage() {
 
       <div className="md:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white shadow-xl rounded-2xl p-8">
-          {/* REGISTER */}
           {formType === 'register' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Create Account</h2>
@@ -171,7 +180,6 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* LOGIN */}
           {formType === 'login' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Login</h2>
@@ -185,7 +193,6 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* OTP LOGIN */}
           {formType === 'otp' && (
             <>
               <h2 className="text-2xl font-bold mb-4">OTP Login</h2>
@@ -200,7 +207,6 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* RESET PASSWORD */}
           {formType === 'reset' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
@@ -225,7 +231,6 @@ export default function AuthPage() {
             </>
           )}
 
-          {/* CHANGE PASSWORD */}
           {formType === 'change' && (
             <>
               <h2 className="text-2xl font-bold mb-4">Change Password</h2>
