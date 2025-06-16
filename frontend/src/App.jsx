@@ -1,20 +1,16 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
-import Register from './pages/Register';
-import OTPLogin from './pages/OTPLogin';
-import VerifyOTP from './pages/VerifyOTP';
+import AuthPage from './pages/AuthPage';
 import Navbar from './components/Navbar';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-black dark:text-white transition-colors">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<OTPLogin />} />
-        <Route path="/verify" element={<VerifyOTP />} />
+        <Route path="/auth" element={<AuthPage />} /> {/* ✅ Added properly */}
       </Routes>
     </div>
   );

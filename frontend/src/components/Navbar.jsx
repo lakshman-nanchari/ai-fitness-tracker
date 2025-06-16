@@ -6,8 +6,7 @@ export default function Navbar() {
       <h1 className="text-xl font-bold">FitTrack</h1>
       <div className="space-x-4">
         <Link to="/" className="hover:text-yellow-400">Home</Link>
-        <Link to="/register" className="hover:text-yellow-400">Register</Link>
-        <Link to="/login" className="hover:text-yellow-400">Login</Link>
+        <Link to="/auth" className="hover:text-yellow-400">Register</Link>
       </div>
     </nav>
   );

@@ -6,10 +6,15 @@ export default {
   ],
   theme: {
   extend: {
-    colors: {
-      primary: '#FACC15', // yellow-400
-      darkPrimary: '#9333EA', // purple-600
-    },
+    keyframes: {
+    fadeInOut: {
+      '0%, 100%': { opacity: 0 },
+      '50%': { opacity: 1 }
+    }
+  },
+  animation: {
+    'fade-in-out': 'fadeInOut 5s ease-in-out infinite'
+  }
   },
 },
   plugins: [
