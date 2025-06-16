@@ -1,8 +1,14 @@
 from django.urls import path
-from . import views
+from .views import (
+    register, login_view, request_otp,
+    verify_otp, change_password, reset_password
+)
 
 urlpatterns = [
-    path('register/', views.register, name='register'),
-    path('request-otp/', views.request_otp, name='request_otp'),
-    path('verify-otp/', views.verify_otp, name='verify_otp'),
+    path('register/', register),
+    path('login/', login_view),
+    path('request-otp/', request_otp),
+    path('verify-otp/', verify_otp),
+    path('change-password/', change_password),
+    path('reset-password/', reset_password),
 ]
