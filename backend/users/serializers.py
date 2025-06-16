@@ -62,20 +62,26 @@ class OTPVerifySerializer(serializers.Serializer):
 
 
 class PasswordChangeSerializer(serializers.Serializer):
-    old_password = serializers.CharField(write_only=True)
+    old_password = serializers.CharField(write_only=True, required=False)
     new_password = serializers.CharField(write_only=True, min_length=6)
-
-    def validate_old_password(self, value):
-        user = self.context['user']
-        if not user.check_password(value):
-            raise serializers.ValidationError("Current password is incorrect")
-        return value
+    otp_verified = serializers.BooleanField(default=False, write_only=True)
 
     def validate(self, data):
         user = self.context['user']
-        last_change = user.last_password_change
-        if last_change and (timezone.now() - last_change) < timedelta(days=1):
+        otp_verified = data.get('otp_verified', False)
+
+        # If OTP is not verified, old_password is required
+        if not otp_verified:
+            old_password = data.get('old_password')
+            if not old_password:
+                raise serializers.ValidationError({"old_password": "This field is required if OTP is not verified."})
+            if not user.check_password(old_password):
+                raise serializers.ValidationError({"old_password": "Current password is incorrect."})
+
+        # Enforce 1 change per day
+        if user.last_password_change and (timezone.now() - user.last_password_change) < timedelta(days=1):
             raise serializers.ValidationError("You can only change your password once per day.")
+
         return data
 
 
