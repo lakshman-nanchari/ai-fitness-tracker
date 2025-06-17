@@ -1,3 +1,4 @@
+// AuthPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/axios';
 import { toast } from 'react-toastify';
@@ -5,7 +6,6 @@ import { jwtDecode } from 'jwt-decode';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import 'react-toastify/dist/ReactToastify.css';
 
-// 🔐 Password input with visibility toggle
 const PasswordField = ({ name, value, onChange, placeholder, required = true }) => {
   const [show, setShow] = useState(false);
   const inputRef = useRef(null);
@@ -21,7 +21,7 @@ const PasswordField = ({ name, value, onChange, placeholder, required = true }) 
   }, [show]);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <input
         ref={inputRef}
         name={name}
@@ -30,9 +30,13 @@ const PasswordField = ({ name, value, onChange, placeholder, required = true }) 
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full p-3 border border-gray-300 dark:border-gray-700 bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white placeholder-gray-600 dark:placeholder-gray-400 rounded"
+        autoComplete="new-password"
+        className="w-full p-3 pr-12 border border-gray-300 dark:border-gray-700 bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white placeholder-gray-600 dark:placeholder-gray-400 rounded"
       />
-      <div className="absolute top-3 right-3 cursor-pointer text-gray-600 dark:text-gray-300" onClick={() => setShow(!show)}>
+      <div
+        className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-600 dark:text-gray-300 z-10"
+        onClick={() => setShow(!show)}
+      >
         {show ? <FiEyeOff /> : <FiEye />}
       </div>
     </div>
@@ -190,91 +194,78 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#e0d7c8] dark:bg-gray-950 transition-all duration-300">
-      <div className="md:w-1/2 min-h-[400px] relative bg-cover bg-center flex items-center justify-center"
+      <div className="md:w-1/2 min-h-[400px] bg-cover bg-center flex items-start justify-center pt-10"
         style={{ backgroundImage: `url('/images/gym/register-bg.jpg')` }}>
-        <div className="absolute inset-0" />
         <div className="relative z-10 max-w-md text-center space-y-6 px-6">
-          <p className="text-lg italic animate-fade-in-out">❝ {quotes[quoteIndex]} ❞</p>
+          <p className="text-2xl italic animate-fade-in-out text-white drop-shadow-lg">❝ {quotes[quoteIndex]} ❞</p>
         </div>
       </div>
 
       <div className="md:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white shadow-xl rounded-2xl p-8">
+          <h2 className="text-2xl font-bold mb-6 text-center capitalize">{formType.replace('-', ' ')}</h2>
 
+          {/* Registration */}
           {formType === 'register' && (
-            <>
-              <h2 className="text-2xl font-bold mb-4">Create Account</h2>
-              <form onSubmit={(e) => handleSubmit(e, 'register')} className="space-y-4">
-                <input name="email" type="email" placeholder="Email" value={registerForm.email} onChange={handleChange(setRegisterForm)} className={inputClass} required />
-                <input name="username" placeholder="Username" value={registerForm.username} onChange={handleChange(setRegisterForm)} className={inputClass} required />
-                <PasswordField name="password" placeholder="Password" value={registerForm.password} onChange={handleChange(setRegisterForm)} />
-                <button type="submit" className={buttonClass} disabled={loading}>{loading ? 'Please wait...' : 'Register'}</button>
-              </form>
-              <p className="mt-4 text-sm text-center">Already have an account? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('login')}>Login</span></p>
-            </>
+            <form onSubmit={(e) => handleSubmit(e, 'register')} className="space-y-4" autoComplete="off">
+              <input type="text" name="username" placeholder="Username" className={inputClass} value={registerForm.username} onChange={handleChange(setRegisterForm)} required autoComplete="username" />
+              <input type="email" name="email" placeholder="Email" className={inputClass} value={registerForm.email} onChange={handleChange(setRegisterForm)} required autoComplete="email" />
+              <PasswordField name="password" placeholder="Password" value={registerForm.password} onChange={handleChange(setRegisterForm)} />
+              <button className={buttonClass} type="submit" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
+              <p className="text-sm mt-2 text-center">Already have an account? <span className="underline cursor-pointer" onClick={() => setFormType('login')}>Login</span></p>
+            </form>
           )}
 
+          {/* Login */}
           {formType === 'login' && (
-            <>
-              <h2 className="text-2xl font-bold mb-4">Login</h2>
-              <form onSubmit={(e) => handleSubmit(e, 'login')} className="space-y-4">
-                <input name="email" type="email" placeholder="Email" value={loginForm.email} onChange={handleChange(setLoginForm)} className={inputClass} required />
-                <PasswordField name="password" placeholder="Password" value={loginForm.password} onChange={handleChange(setLoginForm)} />
-                <button type="submit" className={buttonClass} disabled={loading}>{loading ? 'Please wait...' : 'Login'}</button>
-              </form>
-              <p className="mt-4 text-sm text-center">Forgot password? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('reset')}>Reset it</span></p>
-              <p className="mt-2 text-sm text-center">Don't have an account? <span className="text-blue-500 cursor-pointer" onClick={() => setFormType('register')}>Register</span></p>
-            </>
+            <form onSubmit={(e) => handleSubmit(e, 'login')} className="space-y-4" autoComplete="off">
+              <input type="email" name="email" placeholder="Email" className={inputClass} value={loginForm.email} onChange={handleChange(setLoginForm)} required autoComplete="email" />
+              <PasswordField name="password" placeholder="Password" value={loginForm.password} onChange={handleChange(setLoginForm)} />
+              <button className={buttonClass} type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
+              <div className="flex justify-between text-sm mt-2">
+                <span className="underline cursor-pointer" onClick={() => setFormType('otp-login')}>Login with OTP</span>
+                <span className="underline cursor-pointer" onClick={() => setFormType('reset')}>Forgot password?</span>
+              </div>
+              <p className="text-sm mt-2 text-center">New here? <span className="underline cursor-pointer" onClick={() => setFormType('register')}>Register</span></p>
+            </form>
           )}
 
-          {formType === 'otp' && (
-            <>
-              <h2 className="text-2xl font-bold mb-4">OTP Login</h2>
+           {formType === 'otp-login' && (
               <form onSubmit={(e) => handleSubmit(e, otpSent ? 'otp-login-verify' : 'otp-login-send')} className="space-y-4">
-                <input name="email" type="email" placeholder="Email" value={otpForm.email} onChange={handleChange(setOtpForm)} className={inputClass} required />
+                <input type="email" name="email" placeholder="Email" className={inputClass} value={otpForm.email} onChange={handleChange(setOtpForm)} required />
                 {otpSent && (
-                  <input name="otp" type="text" placeholder="Enter OTP" value={otpForm.otp} onChange={handleChange(setOtpForm)} className={inputClass} required />
+                  <input type="text" name="otp" placeholder="Enter OTP" className={inputClass} value={otpForm.otp} onChange={handleChange(setOtpForm)} required />
                 )}
-                <button type="submit" className={buttonClass} disabled={loading}>{loading ? 'Please wait...' : otpSent ? 'Login with OTP' : 'Send OTP'}</button>
+                <button className={buttonClass} type="submit" disabled={loading}>{loading ? 'Processing...' : otpSent ? 'Verify OTP' : 'Send OTP'}</button>
+                <div className="flex justify-between text-sm mt-2">
+                  <span className="underline cursor-pointer" onClick={() => setFormType('login')}>Back to Login</span>
+                  <span className="underline cursor-pointer" onClick={() => setFormType('register')}>Register</span>
+                </div>
               </form>
-              <p className="mt-4 text-sm text-center"><span className="text-blue-500 cursor-pointer" onClick={() => setFormType('login')}>Back to Login</span></p>
-            </>
-          )}
+            )}
 
-          {formType === 'reset' && (
-            <>
-              <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
-              <form onSubmit={(e) =>
-                handleSubmit(e, !resetOtpSent ? 'reset-send' : !resetVerified ? 'reset-verify' : 'reset-new-password')
-              } className="space-y-4">
-                <input name="email" type="email" placeholder="Email" value={resetForm.email} onChange={handleChange(setResetForm)} className={inputClass} required />
-                {resetOtpSent && (
-                  <input name="otp" type="text" placeholder="Enter OTP" value={resetForm.otp} onChange={handleChange(setResetForm)} className={inputClass} required />
+            {formType === 'reset' && (
+              <form onSubmit={(e) => handleSubmit(e, resetVerified ? 'reset-new-password' : resetOtpSent ? 'reset-verify' : 'reset-send')} className="space-y-4">
+                <input type="email" name="email" placeholder="Email" className={inputClass} value={resetForm.email} onChange={handleChange(setResetForm)} required />
+                {resetOtpSent && !resetVerified && (
+                  <input type="text" name="otp" placeholder="Enter OTP" className={inputClass} value={resetForm.otp} onChange={handleChange(setResetForm)} required />
                 )}
                 {resetVerified && (
                   <PasswordField name="newPassword" placeholder="New Password" value={resetForm.newPassword} onChange={handleChange(setResetForm)} />
                 )}
-                <button type="submit" className={buttonClass} disabled={loading}>
-                  {loading ? 'Please wait...' :
-                    !resetOtpSent ? 'Send OTP' :
-                      !resetVerified ? 'Verify OTP' :
-                        'Set New Password'}
-                </button>
+                <button className={buttonClass} type="submit" disabled={loading}>{loading ? 'Processing...' : resetVerified ? 'Set New Password' : resetOtpSent ? 'Verify OTP' : 'Send OTP'}</button>
+                <p className="text-sm mt-2 text-center">Remembered? <span className="underline cursor-pointer" onClick={() => setFormType('login')}>Login</span></p>
               </form>
-              <p className="mt-4 text-sm text-center"><span className="text-blue-500 cursor-pointer" onClick={() => setFormType('login')}>Back to Login</span></p>
-            </>
-          )}
+            )}
 
-          {formType === 'change' && (
-            <>
-              <h2 className="text-2xl font-bold mb-4">Change Password</h2>
+            {formType === 'change' && (
               <form onSubmit={(e) => handleSubmit(e, 'change-password')} className="space-y-4">
-                <PasswordField name="oldPassword" placeholder="Current Password" value={changeForm.oldPassword} onChange={handleChange(setChangeForm)} />
                 <PasswordField name="newPassword" placeholder="New Password" value={changeForm.newPassword} onChange={handleChange(setChangeForm)} />
-                <button type="submit" className={buttonClass} disabled={loading}>{loading ? 'Please wait...' : 'Change Password'}</button>
+                <button className={buttonClass} type="submit" disabled={loading}>{loading ? 'Updating...' : 'Change Password'}</button>
+                <p className="text-sm mt-2 text-center underline cursor-pointer" onClick={() => setFormType('login')}>Logout & Login again</p>
               </form>
-            </>
-          )}
+            )}
+
         </div>
       </div>
     </div>

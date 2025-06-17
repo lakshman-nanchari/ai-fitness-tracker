@@ -19,3 +19,15 @@
 .animate-fade-in {
   animation: fade-in 1s ease-in-out;
 }
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
