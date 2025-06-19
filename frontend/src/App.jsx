@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import AuthPage from './pages/AuthPage';
 import Navbar from './components/Navbar';
+import LoginSuccess from './pages/LoginSuccess';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/login-success" element={<LoginSuccess />} /> 
       </Routes>
 
       {/* ✅ Toast Container to show success/error messages */}

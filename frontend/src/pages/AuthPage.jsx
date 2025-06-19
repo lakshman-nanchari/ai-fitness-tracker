@@ -1,5 +1,6 @@
 // AuthPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
@@ -56,6 +57,8 @@ export default function AuthPage() {
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  const navigate = useNavigate();
+
   const quotes = [
     "Push yourself, because no one else is going to do it for you.",
     "Eat clean, train dirty.",
@@ -98,96 +101,100 @@ export default function AuthPage() {
   const handleChange = (setter) => (e) =>
     setter((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (e, type) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      let res;
+const handleSubmit = async (e, type) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    let res;
 
-      if (type === 'register') {
-        res = await API.post('api/users/register/', registerForm);
-        toast.success(res.data.message || 'Registered!');
-        setFormType('login');
-        setRegisterForm({ email: '', username: '', password: '' });
+    if (type === 'register') {
+      res = await API.post('api/users/register/', registerForm);
+      toast.success(res.data.message || 'Registered!');
+      setFormType('login');
+      setRegisterForm({ email: '', username: '', password: '' });
 
-      } else if (type === 'login') {
-        res = await API.post('api/users/login/', loginForm);
-        toast.success('Login successful!');
-        localStorage.setItem('access', res.data.access);
-        localStorage.setItem('refresh', res.data.refresh);
+    } else if (type === 'login') {
+      res = await API.post('api/users/login/', loginForm);
+      toast.success('Login successful!');
+      localStorage.setItem('access', res.data.access);
+      localStorage.setItem('refresh', res.data.refresh);
+      navigate('/login-success'); // ✅ redirect after login
 
-      } else if (type === 'otp-login-send') {
-        res = await API.post('api/users/send-otp/', { email: otpForm.email });
-        toast.success(res.data.message || 'OTP sent!');
-        setOtpSent(true);
+    } else if (type === 'otp-login-send') {
+      res = await API.post('api/users/send-otp/', { email: otpForm.email });
+      toast.success(res.data.message || 'OTP sent!');
+      setOtpSent(true);
 
-      } else if (type === 'otp-login-verify') {
-        res = await API.post('api/users/verify-otp/', { email: otpForm.email, code: otpForm.otp });
-        toast.success(res.data.message || 'OTP verified!');
-        localStorage.setItem('access', res.data.access);
-        localStorage.setItem('refresh', res.data.refresh);
+    } else if (type === 'otp-login-verify') {
+      res = await API.post('api/users/verify-otp/', { email: otpForm.email, code: otpForm.otp });
+      toast.success(res.data.message || 'OTP verified!');
+      localStorage.setItem('access', res.data.access);
+      localStorage.setItem('refresh', res.data.refresh);
+      navigate('/login-success'); // ✅ redirect after OTP login
 
-      } else if (type === 'reset-send') {
-        res = await API.post('api/users/reset-password/', { email: resetForm.email });
-        toast.success(res.data.message || 'Reset OTP sent!');
-        setResetOtpSent(true);
+    } else if (type === 'reset-send') {
+      res = await API.post('api/users/reset-password/', { email: resetForm.email });
+      toast.success(res.data.message || 'Reset OTP sent!');
+      setResetOtpSent(true);
 
-      } else if (type === 'reset-verify') {
-        const verifyRes = await API.post('api/users/verify-otp/', {
-          email: resetForm.email,
-          code: resetForm.otp,
-        });
-        toast.success('OTP verified. Set new password.');
-        localStorage.setItem('reset_access', verifyRes.data.access);
-        setResetVerified(true);
+    } else if (type === 'reset-verify') {
+      const verifyRes = await API.post('api/users/verify-otp/', {
+        email: resetForm.email,
+        code: resetForm.otp,
+      });
+      toast.success('OTP verified. Set new password.');
+      localStorage.setItem('reset_access', verifyRes.data.access);
+      setResetVerified(true);
 
-      } else if (type === 'reset-new-password') {
-        const access = localStorage.getItem('reset_access');
-        res = await API.post('api/users/change-password/', {
-          new_password: resetForm.newPassword
-        }, {
-          headers: { Authorization: `Bearer ${access}` }
-        });
+    } else if (type === 'reset-new-password') {
+      const access = localStorage.getItem('reset_access');
+      res = await API.post('api/users/change-password/', {
+        new_password: resetForm.newPassword
+      }, {
+        headers: { Authorization: `Bearer ${access}` }
+      });
 
-        const loginRes = await API.post('api/users/login/', {
-          email: resetForm.email,
-          password: resetForm.newPassword
-        });
+      const loginRes = await API.post('api/users/login/', {
+        email: resetForm.email,
+        password: resetForm.newPassword
+      });
 
-        localStorage.setItem('access', loginRes.data.access);
-        localStorage.setItem('refresh', loginRes.data.refresh);
+      localStorage.setItem('access', loginRes.data.access);
+      localStorage.setItem('refresh', loginRes.data.refresh);
 
-        toast.success('Password reset and logged in!');
-        setFormType('change');
-        setResetForm({ email: '', otp: '', newPassword: '' });
-        setResetOtpSent(false);
-        setResetVerified(false);
-        localStorage.removeItem('reset_access');
+      toast.success('Password reset and logged in!');
+      setFormType('change');
+      setResetForm({ email: '', otp: '', newPassword: '' });
+      setResetOtpSent(false);
+      setResetVerified(false);
+      localStorage.removeItem('reset_access');
+      navigate('/login-success'); // ✅ redirect after reset + auto-login
 
-      } else if (type === 'change-password') {
-        const token = localStorage.getItem('access');
-        res = await API.post('api/users/change-password/', changeForm, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        toast.success(res.data.message || 'Password changed!');
-        setChangeForm({ oldPassword: '', newPassword: '' });
-      }
-
-    } catch (err) {
-      toast.error(
-        err.response?.data?.email?.[0] ||
-        err.response?.data?.username?.[0] ||
-        err.response?.data?.password?.[0] ||
-        err.response?.data?.old_password?.[0] ||
-        err.response?.data?.non_field_errors?.[0] ||
-        err.response?.data?.detail ||
-        err.response?.data?.message ||
-        'Something went wrong'
-      );
-    } finally {
-      setLoading(false);
+    } else if (type === 'change-password') {
+      const token = localStorage.getItem('access');
+      res = await API.post('api/users/change-password/', changeForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.message || 'Password changed!');
+      setChangeForm({ oldPassword: '', newPassword: '' });
     }
-  };
+
+  } catch (err) {
+    toast.error(
+      err.response?.data?.email?.[0] ||
+      err.response?.data?.username?.[0] ||
+      err.response?.data?.password?.[0] ||
+      err.response?.data?.old_password?.[0] ||
+      err.response?.data?.non_field_errors?.[0] ||
+      err.response?.data?.detail ||
+      err.response?.data?.message ||
+      'Something went wrong'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const inputClass = "w-full p-3 border border-gray-300 dark:border-gray-700 bg-[#f6f1e7] dark:bg-gray-900 text-black dark:text-white placeholder-gray-600 dark:placeholder-gray-400 rounded";
   const buttonClass = "w-full py-2 px-4 bg-black dark:bg-yellow-400 text-white dark:text-black font-semibold rounded hover:bg-[#f4c95d] dark:hover:bg-yellow-300 transition disabled:opacity-50";
