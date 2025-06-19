@@ -2,10 +2,12 @@ from rest_framework import serializers
 from django.utils import timezone
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from .models import OTP
-from .utils import send_otp_email
+from .utils import send_otp_email, generate_otp
 
 User = get_user_model()
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
@@ -38,13 +40,6 @@ class SendOTPSerializer(serializers.Serializer):
             raise serializers.ValidationError("User not found.")
         return email
 
-    def save(self):
-        code = OTP.objects.create(
-            email=self.validated_data['email'],
-            code=OTP.generate_code()
-        )
-        send_otp_email(code.email, code.code)
-
 
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -55,8 +50,10 @@ class VerifyOTPSerializer(serializers.Serializer):
             otp = OTP.objects.filter(email=data['email'], code=data['code']).latest('created_at')
         except OTP.DoesNotExist:
             raise serializers.ValidationError("Invalid OTP.")
+
         if otp.is_expired():
             raise serializers.ValidationError("OTP expired.")
+
         return data
 
 
@@ -67,15 +64,16 @@ class ChangePasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
         request = self.context['request']
 
-        # Enforce once-per-day limit
+        # Enforce once-per-day password change rule
         if user.last_password_change and timezone.now() - user.last_password_change < timezone.timedelta(days=1):
-            raise serializers.ValidationError("You can change password only once per day.")
+            raise serializers.ValidationError("You can change your password only once per day.")
 
-        # Ensure JWT has otp_verified = True
+        # Check if token has otp_verified = True
         auth = JWTAuthentication()
         header = auth.get_header(request)
         raw_token = auth.get_raw_token(header)
         validated_token = auth.get_validated_token(raw_token)
+
         if not validated_token.get('otp_verified', False):
             raise serializers.ValidationError("OTP verification required to change password.")
 
