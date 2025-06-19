@@ -2,11 +2,22 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'http://localhost:8000/', // Update this to match your Django backend URL
+  baseURL: 'http://localhost:8000/api/',
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Optional: if using session/cookie-based auth
 });
+
+// Attach token to every request if available
+instance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export default instance;
