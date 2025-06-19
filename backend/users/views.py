@@ -8,6 +8,7 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
+        # Ensure the user has a profile, or create one
         profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
 

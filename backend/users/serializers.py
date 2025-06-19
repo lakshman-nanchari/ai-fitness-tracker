@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True, help_text="User's username")
+    email = serializers.EmailField(source='user.email', read_only=True, help_text="User's email address")
     age = serializers.IntegerField(required=False, help_text="User's age")
     gender = serializers.ChoiceField(
         choices=UserProfile.GENDER_CHOICES,
@@ -18,4 +20,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['age', 'gender', 'height_cm', 'weight_kg', 'goal']
+        fields = ['username', 'email', 'age', 'gender', 'height_cm', 'weight_kg', 'goal']
