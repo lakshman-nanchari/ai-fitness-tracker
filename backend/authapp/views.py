@@ -30,7 +30,8 @@ class RegisterView(generics.CreateAPIView):
         responses={
             200: openapi.Response("Registered successfully", examples={"application/json": {"message": "Registered successfully."}}),
             400: openapi.Response("Validation error")
-        }
+        },
+        tags=["Authentication"]
     )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -48,7 +49,8 @@ class LoginView(generics.GenericAPIView):
         responses={
             200: openapi.Response("Login success", examples={"application/json": {"refresh": "token", "access": "token"}}),
             400: openapi.Response("Invalid credentials")
-        }
+        },
+        tags=["Authentication"]
     )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -67,7 +69,8 @@ class SendOTPView(generics.GenericAPIView):
         responses={
             200: openapi.Response("OTP sent", examples={"application/json": {"message": "OTP sent to your email"}}),
             400: openapi.Response("Email not found or validation error")
-        }
+        },
+        tags=["Authentication"]
     )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -87,7 +90,8 @@ class VerifyOTPView(generics.GenericAPIView):
         responses={
             200: openapi.Response("OTP verified", examples={"application/json": {"message": "OTP verified", "refresh": "token", "access": "token"}}),
             400: openapi.Response("Invalid or expired OTP")
-        }
+        },
+        tags=["Authentication"]
     )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -109,7 +113,8 @@ class ChangePasswordView(generics.GenericAPIView):
         responses={
             200: openapi.Response("Password changed", examples={"application/json": {"message": "Password changed successfully"}}),
             400: openapi.Response("Validation error or OTP required")
-        }
+        },
+        tags=["Authentication"]
     )
     def post(self, request):
         serializer = self.get_serializer(data=request.data, context={'request': request})
@@ -127,7 +132,8 @@ class ResetPasswordRequestView(generics.GenericAPIView):
         responses={
             200: openapi.Response("Reset OTP sent", examples={"application/json": {"message": "Reset OTP sent"}}),
             400: openapi.Response("User not found")
-        }
+        },
+        tags=["Authentication"]
     )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
