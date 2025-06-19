@@ -49,7 +49,7 @@ const Home = () => {
             Your AI-powered personal trainer and diet planner.
           </p>
           <Link
-            to="/register"
+            to="/auth"
             className="bg-yellow-400 dark:bg-purple-600 text-black dark:text-white font-semibold py-2 px-6 rounded-full hover:bg-yellow-500 dark:hover:bg-purple-700 transition"
           >
             Get Started
