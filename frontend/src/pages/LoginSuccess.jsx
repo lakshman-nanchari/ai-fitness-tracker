@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Salad } from "lucide-react";
+import { Dumbbell, Salad, UserCircle2 } from "lucide-react";
 
 const LoginSuccess = () => {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const LoginSuccess = () => {
           “Your health is an investment, not an expense.”
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
           <button
             onClick={() => navigate("/dashboard")}
             className="px-6 py-3 bg-green-600 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition"
@@ -30,6 +30,14 @@ const LoginSuccess = () => {
           >
             <Salad className="w-5 h-5" />
             View Diet Plan
+          </button>
+
+          <button
+            onClick={() => navigate("/profile")}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition"
+          >
+            <UserCircle2 className="w-5 h-5" />
+            View Profile
           </button>
         </div>
       </div>
