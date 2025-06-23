@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "../api/axios";
+import axios from "../../api/axios";
 import { UserCircle, BarChart3, Settings } from "lucide-react";
 import OverviewTab from "./OverviewTab";
 import EditProfileTab from "./EditProfileTab";
