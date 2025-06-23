@@ -4,12 +4,14 @@ from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
-from .models import UserDailyStat
-from .serializers import UserDailyStatSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+from .models import UserDailyStat
+from .serializers import UserDailyStatSerializer
 
+
+# List + Create daily stats
 class UserDailyStatListCreateView(generics.ListCreateAPIView):
     serializer_class = UserDailyStatSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -21,7 +23,7 @@ class UserDailyStatListCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
     @swagger_auto_schema(
-        operation_summary="Get list of daily stats",
+        operation_summary="Get list of all daily stats for the logged-in user",
         responses={200: UserDailyStatSerializer(many=True)},
         tags=["User Stats"]
     )
@@ -29,7 +31,7 @@ class UserDailyStatListCreateView(generics.ListCreateAPIView):
         return super().get(*args, **kwargs)
 
     @swagger_auto_schema(
-        operation_summary="Create new daily stat",
+        operation_summary="Create a new daily stat entry",
         request_body=UserDailyStatSerializer,
         responses={201: UserDailyStatSerializer, 400: "Bad Request", 401: "Unauthorized"},
         tags=["User Stats"]
@@ -38,6 +40,7 @@ class UserDailyStatListCreateView(generics.ListCreateAPIView):
         return super().post(request, *args, **kwargs)
 
 
+# Retrieve + Update a stat by ID
 class UserDailyStatDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserDailyStatSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -60,7 +63,7 @@ class UserDailyStatDetailView(generics.RetrieveUpdateAPIView):
         return super().get(*args, **kwargs)
 
     @swagger_auto_schema(
-        operation_summary="Update daily stat by ID",
+        operation_summary="Update daily stat by ID (PUT)",
         request_body=UserDailyStatSerializer,
         responses={200: UserDailyStatSerializer, 400: "Bad Request", 401: "Unauthorized", 404: "Not Found"},
         tags=["User Stats"]
@@ -68,7 +71,17 @@ class UserDailyStatDetailView(generics.RetrieveUpdateAPIView):
     def put(self, request, *args, **kwargs):
         return super().put(request, *args, **kwargs)
 
+    @swagger_auto_schema(
+        operation_summary="Partially update daily stat by ID (PATCH)",
+        request_body=UserDailyStatSerializer,
+        responses={200: UserDailyStatSerializer, 400: "Bad Request", 401: "Unauthorized", 404: "Not Found"},
+        tags=["User Stats"]
+    )
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
 
+
+# Get today's stats
 class UserTodayStatView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -86,28 +99,29 @@ class UserTodayStatView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# Get summary (today, last 7 days, last 30 days)
 class SummaryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
-        operation_summary="Get combined summary (today + 7-day + 30-day)",
+        operation_summary="Get combined summary (today + last 7 days + last 30 days)",
         responses={
             200: openapi.Response(
-                description="Fitness summary",
+                description="Fitness summary data",
                 examples={
                     "application/json": {
-                        "today": {"steps": 10000, "calories": 2200, "water": 2.5, "sleep": 7},
+                        "today": {"steps": 8000, "calories": 2000, "water": 2.0, "sleep": 7},
                         "last_7_days": {
-                            "total_steps": 56000,
-                            "total_calories": 10500,
-                            "total_water": 17.5,
-                            "average_sleep_hours": 7.2,
+                            "total_steps": 55000,
+                            "total_calories": 14000,
+                            "total_water": 14.0,
+                            "average_sleep_hours": 6.8,
                         },
                         "last_30_days": {
-                            "total_steps": 210000,
-                            "total_calories": 42000,
-                            "total_water": 75.0,
-                            "average_sleep_hours": 6.9,
+                            "total_steps": 215000,
+                            "total_calories": 54000,
+                            "total_water": 60.0,
+                            "average_sleep_hours": 7.1,
                         },
                     }
                 }
@@ -131,7 +145,7 @@ class SummaryView(APIView):
             "sleep": today_stat.sleep_hours if today_stat else 0,
         }
 
-        # Last 7 Days
+        # Last 7 days
         week_stats = UserDailyStat.objects.filter(user=user, date__range=[week_ago, today])
         week_data = {
             "total_steps": sum(s.steps for s in week_stats),
@@ -142,7 +156,7 @@ class SummaryView(APIView):
             ) if week_stats else 0
         }
 
-        # Last 30 Days
+        # Last 30 days
         month_stats = UserDailyStat.objects.filter(user=user, date__range=[month_ago, today])
         month_data = {
             "total_steps": sum(s.steps for s in month_stats),
