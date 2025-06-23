@@ -22,10 +22,7 @@ class UserDailyStatListCreateView(generics.ListCreateAPIView):
 
     @swagger_auto_schema(
         operation_summary="Get list of daily stats",
-        responses={
-            200: UserDailyStatSerializer(many=True),
-            401: "Unauthorized",
-        },
+        responses={200: UserDailyStatSerializer(many=True)},
         tags=["User Stats"]
     )
     def get(self, *args, **kwargs):
@@ -34,11 +31,7 @@ class UserDailyStatListCreateView(generics.ListCreateAPIView):
     @swagger_auto_schema(
         operation_summary="Create new daily stat",
         request_body=UserDailyStatSerializer,
-        responses={
-            201: UserDailyStatSerializer,
-            400: "Bad request – invalid data",
-            401: "Unauthorized",
-        },
+        responses={201: UserDailyStatSerializer, 400: "Bad Request", 401: "Unauthorized"},
         tags=["User Stats"]
     )
     def post(self, request, *args, **kwargs):
@@ -60,11 +53,7 @@ class UserDailyStatDetailView(generics.RetrieveUpdateAPIView):
 
     @swagger_auto_schema(
         operation_summary="Retrieve specific daily stat by ID",
-        responses={
-            200: UserDailyStatSerializer,
-            401: "Unauthorized",
-            404: "Stat not found",
-        },
+        responses={200: UserDailyStatSerializer, 401: "Unauthorized", 404: "Not Found"},
         tags=["User Stats"]
     )
     def get(self, *args, **kwargs):
@@ -73,12 +62,7 @@ class UserDailyStatDetailView(generics.RetrieveUpdateAPIView):
     @swagger_auto_schema(
         operation_summary="Update daily stat by ID",
         request_body=UserDailyStatSerializer,
-        responses={
-            200: UserDailyStatSerializer,
-            400: "Bad request – invalid data",
-            401: "Unauthorized",
-            404: "Stat not found",
-        },
+        responses={200: UserDailyStatSerializer, 400: "Bad Request", 401: "Unauthorized", 404: "Not Found"},
         tags=["User Stats"]
     )
     def put(self, request, *args, **kwargs):
@@ -90,11 +74,7 @@ class UserTodayStatView(APIView):
 
     @swagger_auto_schema(
         operation_summary="Get today's stat for the logged-in user",
-        responses={
-            200: UserDailyStatSerializer,
-            404: "No entry found for today",
-            401: "Unauthorized",
-        },
+        responses={200: UserDailyStatSerializer, 404: "No entry found for today", 401: "Unauthorized"},
         tags=["User Stats"]
     )
     def get(self, request):
@@ -106,40 +86,75 @@ class UserTodayStatView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class SevenDaySummaryView(APIView):
+class SummaryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
-        operation_summary="Get 7-day fitness stats summary",
+        operation_summary="Get combined summary (today + 7-day + 30-day)",
         responses={
             200: openapi.Response(
-                description="7-day summary",
+                description="Fitness summary",
                 examples={
                     "application/json": {
-                        "total_steps": 56000,
-                        "total_calories": 10500,
-                        "average_sleep_hours": 7.2
+                        "today": {"steps": 10000, "calories": 2200, "water": 2.5, "sleep": 7},
+                        "last_7_days": {
+                            "total_steps": 56000,
+                            "total_calories": 10500,
+                            "total_water": 17.5,
+                            "average_sleep_hours": 7.2,
+                        },
+                        "last_30_days": {
+                            "total_steps": 210000,
+                            "total_calories": 42000,
+                            "total_water": 75.0,
+                            "average_sleep_hours": 6.9,
+                        },
                     }
-                },
+                }
             ),
             401: "Unauthorized",
         },
         tags=["User Stats"]
     )
     def get(self, request):
+        user = request.user
         today = timezone.now().date()
         week_ago = today - timedelta(days=6)
-        stats = UserDailyStat.objects.filter(user=request.user, date__range=[week_ago, today])
+        month_ago = today - timedelta(days=30)
 
-        total_steps = sum(s.steps for s in stats if s.steps is not None)
-        total_calories = sum(s.calories for s in stats if s.calories is not None)
-        avg_sleep = (
-            sum(s.sleep_hours for s in stats if s.sleep_hours is not None) / stats.count()
-            if stats.exists() else 0
-        )
+        # Today
+        today_stat = UserDailyStat.objects.filter(user=user, date=today).first()
+        today_data = {
+            "steps": today_stat.steps if today_stat else 0,
+            "calories": today_stat.calories if today_stat else 0,
+            "water": today_stat.water_intake_liters if today_stat else 0,
+            "sleep": today_stat.sleep_hours if today_stat else 0,
+        }
+
+        # Last 7 Days
+        week_stats = UserDailyStat.objects.filter(user=user, date__range=[week_ago, today])
+        week_data = {
+            "total_steps": sum(s.steps for s in week_stats),
+            "total_calories": sum(s.calories for s in week_stats),
+            "total_water": sum(s.water_intake_liters for s in week_stats),
+            "average_sleep_hours": round(
+                sum(s.sleep_hours for s in week_stats) / week_stats.count(), 1
+            ) if week_stats else 0
+        }
+
+        # Last 30 Days
+        month_stats = UserDailyStat.objects.filter(user=user, date__range=[month_ago, today])
+        month_data = {
+            "total_steps": sum(s.steps for s in month_stats),
+            "total_calories": sum(s.calories for s in month_stats),
+            "total_water": sum(s.water_intake_liters for s in month_stats),
+            "average_sleep_hours": round(
+                sum(s.sleep_hours for s in month_stats) / month_stats.count(), 1
+            ) if month_stats else 0
+        }
 
         return Response({
-            "total_steps": total_steps,
-            "total_calories": total_calories,
-            "average_sleep_hours": round(avg_sleep, 1)
+            "today": today_data,
+            "last_7_days": week_data,
+            "last_30_days": month_data,
         }, status=status.HTTP_200_OK)
