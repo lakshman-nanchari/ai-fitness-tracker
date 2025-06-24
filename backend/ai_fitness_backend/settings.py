@@ -173,3 +173,6 @@ SWAGGER_SETTINGS = {
     },
     'USE_SESSION_AUTH': False,  # Disable default login/password form
 }
+
+
+HUGGINGFACE_API_KEY = "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"

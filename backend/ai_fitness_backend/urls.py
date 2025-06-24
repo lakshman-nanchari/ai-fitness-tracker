@@ -21,5 +21,6 @@ urlpatterns = [
     path('api/', include('authapp.urls')),  
     path('api/users/', include('users.urls')),
     path("api/stats/", include("stats.urls")),
+    path('api/meal/', include('mealplanner.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
