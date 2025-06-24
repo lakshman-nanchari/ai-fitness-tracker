@@ -7,8 +7,9 @@ class MealPreferenceSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("user",)
 
+
 class MealPlanSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(read_only=True)  # avoid Swagger default serialization issue
+    created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = MealPlan
