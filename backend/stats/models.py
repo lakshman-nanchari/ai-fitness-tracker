@@ -1,9 +1,13 @@
 from django.db import models
 from django.conf import settings
+from datetime import date
+
 
 class UserDailyStat(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="daily_stats")
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=date.today)
+
+
 
     steps = models.PositiveIntegerField(default=0)
     calories = models.PositiveIntegerField(default=0)

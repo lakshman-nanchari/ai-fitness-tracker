@@ -17,7 +17,10 @@ class UserDailyStatListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return UserDailyStat.objects.filter(user=self.request.user)
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return UserDailyStat.objects.none()
+        return UserDailyStat.objects.filter(user=user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -46,7 +49,10 @@ class UserDailyStatDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return UserDailyStat.objects.filter(user=self.request.user)
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return UserDailyStat.objects.none()
+        return UserDailyStat.objects.filter(user=user)
 
     def get_object(self):
         try:

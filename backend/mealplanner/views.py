@@ -26,6 +26,8 @@ class MealPlanListCreateView(APIView):
 
     @swagger_auto_schema(operation_description="List meal plans for the logged-in user")
     def get(self, request):
+        if not request.user.is_authenticated:
+            return Response([])  # Swagger-safe fallback
         plans = MealPlan.objects.filter(user=request.user).order_by("-created_at")
         return Response(MealPlanSerializer(plans, many=True).data)
 
@@ -91,4 +93,7 @@ class MealPlanDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return MealPlan.objects.filter(user=self.request.user)
+        user = self.request.user
+        if not user.is_authenticated:
+            return MealPlan.objects.none()  # Swagger-safe fallback
+        return MealPlan.objects.filter(user=user)
