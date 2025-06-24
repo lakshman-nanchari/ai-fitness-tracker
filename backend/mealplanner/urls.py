@@ -4,5 +4,5 @@ from .views import MealPreferenceView, MealPlanListCreateView, MealPlanDeleteVie
 urlpatterns = [
     path("preferences/", MealPreferenceView.as_view(), name="meal-preferences"),
     path("meal-plans/", MealPlanListCreateView.as_view(), name="meal-plans"),
-    path("plans/<int:pk>/", MealPlanDeleteView.as_view(), name="delete-meal-plan"),
+    path("meal-plans/<int:pk>/", MealPlanDeleteView.as_view(), name="delete-meal-plan"),
 ]
