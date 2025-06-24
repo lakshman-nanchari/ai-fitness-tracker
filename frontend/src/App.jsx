@@ -5,6 +5,7 @@ import AuthPage from './pages/AuthPage';
 import Navbar from './components/Navbar';
 import LoginSuccess from './pages/LoginSuccess';
 import UserProfile from './pages/UserProfile';
+import MealPlanner from './pages/MealPlanner';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -17,7 +18,7 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/login-success" element={<LoginSuccess />} /> 
         <Route path="/profile" element={<UserProfile />} />
-
+        <Route path="/meal-planner" element={<MealPlanner />} />
       </Routes>
 
       {/* ✅ Toast Container to show success/error messages */}

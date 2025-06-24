@@ -25,7 +25,7 @@ const LoginSuccess = () => {
           </button>
 
           <button
-            onClick={() => navigate("/diet")}
+            onClick={() => navigate("/meal-planner")}
             className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-300 transition dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
           >
             <Salad className="w-5 h-5" />
