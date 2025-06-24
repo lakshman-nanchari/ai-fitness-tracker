@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from "react";
-import axios from "../api/axios"; // make sure this is your configured axios instance
+import axios from "../api/axios";
 import { Loader2, Trash2, Sparkles } from "lucide-react";
 
 const MealPlanner = () => {
   const [preferences, setPreferences] = useState({
-    dietary_restrictions: "",
-    calorie_target: "",
+    diet_type: "",
+    calories_per_day: "",
     meals_per_day: 3,
-    additional_notes: "",
+    allergies: "",
+    goal: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState("");
 
-  // Fetch saved plans from backend
   const fetchPlans = async () => {
     try {
-      const res = await axios.get("/api/meal-plans/");
+      const res = await axios.get("/api/meal/meal-plans/");
       setPlans(res.data);
     } catch (err) {
       setError("Failed to load meal plans.");
@@ -28,17 +28,15 @@ const MealPlanner = () => {
     fetchPlans();
   }, []);
 
-  // Handle input changes
   const handleChange = (e) => {
     setPreferences({ ...preferences, [e.target.name]: e.target.value });
   };
 
-  // Generate a new plan
   const handleGenerate = async () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("/api/meal-plans/generate/", preferences);
+      await axios.post("/api/meal/meal-plans/", preferences);
       fetchPlans();
     } catch (err) {
       setError("Failed to generate meal plan.");
@@ -47,10 +45,9 @@ const MealPlanner = () => {
     }
   };
 
-  // Delete a plan
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/meal-plans/${id}/`);
+      await axios.delete(`/api/meal/meal-plans/${id}/`);
       setPlans(plans.filter((plan) => plan.id !== id));
     } catch (err) {
       setError("Failed to delete meal plan.");
@@ -58,70 +55,112 @@ const MealPlanner = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
-      <h1 className="text-3xl font-bold text-center">🍽️ Meal Planner</h1>
+    <div className="min-h-screen bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900 text-white p-6">
+      <div className="max-w-6xl mx-auto space-y-10">
+        <h1 className="text-4xl font-bold text-center">🥗 AI-Powered Meal Planner</h1>
 
-      {/* Form */}
-      <div className="bg-white rounded-lg shadow p-6 space-y-4">
-        <input
-          type="text"
-          name="dietary_restrictions"
-          placeholder="Dietary Restrictions (e.g. vegan, keto)"
-          className="w-full border border-gray-300 rounded p-2"
-          value={preferences.dietary_restrictions}
-          onChange={handleChange}
-        />
-        <input
-          type="number"
-          name="calorie_target"
-          placeholder="Calorie Target (e.g. 2000)"
-          className="w-full border border-gray-300 rounded p-2"
-          value={preferences.calorie_target}
-          onChange={handleChange}
-        />
-        <input
-          type="number"
-          name="meals_per_day"
-          placeholder="Meals Per Day"
-          className="w-full border border-gray-300 rounded p-2"
-          value={preferences.meals_per_day}
-          onChange={handleChange}
-        />
-        <textarea
-          name="additional_notes"
-          placeholder="Any additional notes..."
-          className="w-full border border-gray-300 rounded p-2"
-          rows={3}
-          value={preferences.additional_notes}
-          onChange={handleChange}
-        />
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center justify-center"
-        >
-          {loading ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <Sparkles className="h-5 w-5 mr-2" />}
-          Generate Meal Plan
-        </button>
-      </div>
+        {/* Preferences Form */}
+        <div className="bg-gray-800 shadow-xl rounded-2xl p-8 space-y-6 border border-gray-700">
+          <h2 className="text-2xl font-semibold text-white">Your Preferences</h2>
 
-      {/* Error */}
-      {error && <p className="text-red-600 text-center">{error}</p>}
-
-      {/* Saved Plans */}
-      <div className="space-y-4">
-        {plans.map((plan) => (
-          <div key={plan.id} className="bg-white border border-gray-200 rounded-lg shadow p-4 relative">
-            <button
-              onClick={() => handleDelete(plan.id)}
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-            <h3 className="font-semibold text-lg mb-2">Plan #{plan.id}</h3>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700">{plan.plan}</pre>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              name="diet_type"
+              placeholder="Diet Type (e.g. vegan, keto)"
+              className="dark-input"
+              value={preferences.diet_type}
+              onChange={handleChange}
+            />
+            <input
+              type="number"
+              name="calories_per_day"
+              placeholder="Calories per Day (e.g. 2000)"
+              className="dark-input"
+              value={preferences.calories_per_day}
+              onChange={handleChange}
+            />
+            <input
+              type="number"
+              name="meals_per_day"
+              placeholder="Meals per Day"
+              className="dark-input"
+              value={preferences.meals_per_day}
+              onChange={handleChange}
+            />
+            <input
+              type="text"
+              name="allergies"
+              placeholder="Allergies (comma separated)"
+              className="dark-input"
+              value={preferences.allergies}
+              onChange={handleChange}
+            />
+            <input
+              type="text"
+              name="goal"
+              placeholder="Goal (e.g. lose weight)"
+              className="dark-input col-span-1 md:col-span-2"
+              value={preferences.goal}
+              onChange={handleChange}
+            />
           </div>
-        ))}
+
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold px-5 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-600 flex items-center justify-center w-full md:w-fit"
+          >
+            {loading ? (
+              <Loader2 className="animate-spin h-5 w-5 mr-2" />
+            ) : (
+              <Sparkles className="h-5 w-5 mr-2" />
+            )}
+            Generate Meal Plan
+          </button>
+
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+
+        {/* Saved Plans */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold mb-4 text-white">Your Saved Plans</h2>
+          {plans.length === 0 ? (
+            <p className="text-gray-400 text-center">No meal plans yet. Generate one!</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {plans.map((plan) => {
+                const mealSections = plan.plan_text.split(/(?=Breakfast:|Lunch:|Dinner:)/gi); // split while keeping the keywords
+                return mealSections.map((mealText, index) => {
+                    let label = "";
+                    if (/^Breakfast:/i.test(mealText)) label = "🍳 Breakfast";
+                    else if (/^Lunch:/i.test(mealText)) label = "🥗 Lunch";
+                    else if (/^Dinner:/i.test(mealText)) label = "🍛 Dinner";
+                    else label = `🍽️ Meal ${index + 1}`;
+
+                    return (
+                    <div
+                        key={`${plan.id}-${index}`}
+                        className="bg-gray-700 border border-gray-600 rounded-2xl shadow-lg p-5 relative hover:scale-[1.01] transition-transform"
+                    >
+                        <button
+                        onClick={() => handleDelete(plan.id)}
+                        className="absolute top-3 right-3 text-red-400 hover:text-red-600"
+                        >
+                        <Trash2 className="w-5 h-5" />
+                        </button>
+                        <h3 className="text-lg font-semibold text-purple-300 mb-2">{label}</h3>
+                        <pre className="whitespace-pre-wrap text-sm text-white/90 bg-gray-800 p-3 rounded-md leading-relaxed">
+                        {mealText.trim()}
+                        </pre>
+                    </div>
+                    );
+                });
+                })}
+
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
