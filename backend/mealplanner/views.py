@@ -41,6 +41,7 @@ class MealPlanListCreateView(APIView):
                 "goal": openapi.Schema(type=openapi.TYPE_STRING),
                 "allergies": openapi.Schema(type=openapi.TYPE_STRING),
                 "calories_per_day": openapi.Schema(type=openapi.TYPE_INTEGER),
+                "meals_per_day": openapi.Schema(type=openapi.TYPE_INTEGER),
             },
             required=[]
         ),
@@ -57,29 +58,41 @@ class MealPlanListCreateView(APIView):
         # Get or create preferences
         prefs, _ = MealPreference.objects.get_or_create(user=user)
 
-        # Use preference values unless request overrides them
+        # Resolve values
         diet_type = request.data.get("diet_type") or prefs.diet_type
         goal = request.data.get("goal") or prefs.goal or getattr(profile, "goal", "")
         allergies = request.data.get("allergies") or prefs.allergies or "none"
         calories = request.data.get("calories_per_day") or prefs.calories_per_day
+        meals_per_day = int(request.data.get("meals_per_day") or prefs.meals_per_day or 3)
 
         # Validate inputs
         if not diet_type:
-            return Response({"error": "Diet type is required (via request or preferences)."}, status=400)
+            return Response({"error": "Diet type is required."}, status=400)
         if not goal:
-            return Response({"error": "Goal is required (via request, profile, or preferences)."}, status=400)
+            return Response({"error": "Goal is required."}, status=400)
         if not calories:
             return Response({"error": "Calories per day is required."}, status=400)
+        if meals_per_day not in [3, 5]:
+            return Response({"error": "Only 3 or 5 meals per day are supported."}, status=400)
 
-        # Prompt generation
+        # Define meal labels
+        if meals_per_day == 3:
+            meal_labels = ["Breakfast", "Lunch", "Dinner"]
+        else:
+            meal_labels = ["Breakfast", "Morning Snack", "Lunch", "Evening Snack", "Dinner"]
+
+        # Prompt for AI
         prompt = (
-            f"Generate a 3-meal {diet_type} meal plan for a {profile.age}-year-old "
+            f"Create a {meals_per_day}-meal {diet_type} diet plan for a {profile.age}-year-old "
             f"{profile.gender.lower()} who wants to {goal.lower()}. "
-            f"Include estimated calories per meal. Avoid: {allergies}. "
-            f"Total daily calories: {calories}."
+            f"Total daily calories should be approximately {calories}. "
+            f"Do not include ingredients they are allergic to: {allergies}. "
+            f"Label each meal with these headers:\n\n" +
+            "\n".join(f"{label}:" for label in meal_labels) +
+            "\n\nInclude estimated calories per meal and format clearly for readability."
         )
 
-        # Call HuggingFace API
+        # Call Hugging Face
         headers = {
             "Authorization": f"Bearer {settings.HUGGINGFACE_API_KEY}"
         }
@@ -106,5 +119,5 @@ class MealPlanDeleteView(generics.DestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         if not user or not user.is_authenticated:
-            return MealPlan.objects.none()  # Swagger-safe fallback
+            return MealPlan.objects.none()
         return MealPlan.objects.filter(user=user)
