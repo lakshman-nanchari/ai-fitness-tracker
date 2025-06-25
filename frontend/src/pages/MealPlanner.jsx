@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "../api/axios";
-import { Loader2, Trash2, Sparkles } from "lucide-react";
+import { Loader2, Trash2, Sparkles, FolderOpen } from "lucide-react";
 
 const MealPlanner = () => {
   const [preferences, setPreferences] = useState({
@@ -16,6 +16,7 @@ const MealPlanner = () => {
   const [error, setError] = useState("");
 
   const fetchPlans = async () => {
+    setError("");
     try {
       const res = await axios.get("/api/meal/meal-plans/");
       setPlans(res.data);
@@ -23,10 +24,6 @@ const MealPlanner = () => {
       setError("Failed to load meal plans.");
     }
   };
-
-  useEffect(() => {
-    fetchPlans();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,7 +38,7 @@ const MealPlanner = () => {
     setError("");
     try {
       await axios.post("/api/meal/meal-plans/", preferences);
-      fetchPlans();
+      fetchPlans(); // ✅ fetch plans only after generating
     } catch (err) {
       setError("Failed to generate meal plan.");
     } finally {
@@ -122,31 +119,41 @@ const MealPlanner = () => {
             </select>
           </div>
 
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold px-5 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-600 flex items-center justify-center w-full md:w-fit"
-          >
-            {loading ? (
-              <Loader2 className="animate-spin h-5 w-5 mr-2" />
-            ) : (
-              <Sparkles className="h-5 w-5 mr-2" />
-            )}
-            Generate Meal Plan
-          </button>
+          <div className="flex flex-col md:flex-row gap-4">
+            <button
+              onClick={handleGenerate}
+              disabled={loading}
+              className="bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold px-5 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-600 flex items-center justify-center w-full md:w-fit"
+            >
+              {loading ? (
+                <Loader2 className="animate-spin h-5 w-5 mr-2" />
+              ) : (
+                <Sparkles className="h-5 w-5 mr-2" />
+              )}
+              Generate Meal Plan
+            </button>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+            <button
+              onClick={fetchPlans}
+              className="bg-gray-700 text-white px-5 py-3 rounded-lg flex items-center justify-center w-full md:w-fit hover:bg-gray-600"
+            >
+              <FolderOpen className="h-5 w-5 mr-2" />
+              Load My Saved Plans
+            </button>
+          </div>
+
+          {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
         </div>
 
         {/* Saved Plans */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold mb-4 text-white">Your Saved Plans</h2>
-          {plans.length === 0 ? (
-            <p className="text-gray-400 text-center">No meal plans yet. Generate one!</p>
-          ) : (
+        {plans.length > 0 && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold mb-4 text-white">Your Saved Plans</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {plans.map((plan) => {
-                const mealSections = plan.plan_text.split(/(?=Breakfast:|Lunch:|Dinner:|Snack:|Morning Snack:|Evening Snack:)/gi);
+                const mealSections = plan.plan_text.split(
+                  /(?=Breakfast:|Lunch:|Dinner:|Snack:|Morning Snack:|Evening Snack:)/gi
+                );
                 return mealSections.map((mealText, index) => {
                   let label = mealText.match(/^[^:]+:/i)?.[0] || `Meal ${index + 1}`;
                   let emoji = label.toLowerCase().includes("breakfast")
@@ -179,8 +186,8 @@ const MealPlanner = () => {
                 });
               })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
