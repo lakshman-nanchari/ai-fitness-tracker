@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'authapp',
     'users',
     'stats',
-    'mealplanner',
+    'dietplan',
 ]
 
 MIDDLEWARE = [
