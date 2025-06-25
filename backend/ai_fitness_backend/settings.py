@@ -174,7 +174,5 @@ SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,  # Disable default login/password form
 }
 
-
-HUGGINGFACE_API_KEY = config("HUGGINGFACE_API_KEY")
-
+OPENROUTER_API_KEY = config("OPENROUTER_API_KEY")
 

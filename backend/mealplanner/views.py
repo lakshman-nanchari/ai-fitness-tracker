@@ -27,8 +27,6 @@ class MealPlanListCreateView(APIView):
 
     @swagger_auto_schema(operation_summary="List meal plans for the user")
     def get(self, request):
-        if not request.user.is_authenticated:
-            return Response([])  # Swagger-safe fallback
         plans = MealPlan.objects.filter(user=request.user).order_by("-created_at")
         return Response(MealPlanSerializer(plans, many=True).data)
 
@@ -49,39 +47,31 @@ class MealPlanListCreateView(APIView):
     )
     def post(self, request):
         user = request.user
-
-        # Fetch profile
         profile = getattr(user, "profile", None)
+
         if not profile or not profile.age or not profile.gender:
             return Response({"error": "Complete your profile (age and gender required)."}, status=400)
 
-        # Get or create preferences
         prefs, _ = MealPreference.objects.get_or_create(user=user)
 
-        # Resolve values
+        # Gather inputs
         diet_type = request.data.get("diet_type") or prefs.diet_type
-        goal = request.data.get("goal") or prefs.goal or getattr(profile, "goal", "")
+        goal = request.data.get("goal") or prefs.goal or profile.goal
         allergies = request.data.get("allergies") or prefs.allergies or "none"
         calories = request.data.get("calories_per_day") or prefs.calories_per_day
         meals_per_day = int(request.data.get("meals_per_day") or prefs.meals_per_day or 3)
 
-        # Validate inputs
-        if not diet_type:
-            return Response({"error": "Diet type is required."}, status=400)
-        if not goal:
-            return Response({"error": "Goal is required."}, status=400)
-        if not calories:
-            return Response({"error": "Calories per day is required."}, status=400)
+        if not diet_type or not goal or not calories:
+            return Response({"error": "Missing required fields."}, status=400)
         if meals_per_day not in [3, 5]:
             return Response({"error": "Only 3 or 5 meals per day are supported."}, status=400)
 
-        # Define meal labels
-        if meals_per_day == 3:
-            meal_labels = ["Breakfast", "Lunch", "Dinner"]
-        else:
-            meal_labels = ["Breakfast", "Morning Snack", "Lunch", "Evening Snack", "Dinner"]
+        meal_labels = (
+            ["Breakfast", "Lunch", "Dinner"]
+            if meals_per_day == 3
+            else ["Breakfast", "Morning Snack", "Lunch", "Evening Snack", "Dinner"]
+        )
 
-        # Prompt for AI
         prompt = (
             f"Create a {meals_per_day}-meal {diet_type} diet plan for a {profile.age}-year-old "
             f"{profile.gender.lower()} who wants to {goal.lower()}. "
@@ -92,24 +82,38 @@ class MealPlanListCreateView(APIView):
             "\n\nInclude estimated calories per meal and format clearly for readability."
         )
 
-        # Call Hugging Face
-        headers = {
-            "Authorization": f"Bearer {settings.HUGGINGFACE_API_KEY}"
-        }
-        response = requests.post(
-            "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3",
-            json={"inputs": prompt},
-            headers=headers,
-        )
+        try:
+            headers = {
+                "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                "HTTP-Referer": "https://fittrack.yoursite.com",
+                "X-Title": "FitTrack Meal Planner",
+                "Content-Type": "application/json",
+            }
 
-        if response.status_code != 200:
-            return Response({"error": "AI generation failed."}, status=500)
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json={
+                    "model": "mistralai/mistral-small-3.2-24b-instruct:free",
+                    "messages": [
+                        {"role": "system", "content": "You are a helpful fitness and nutrition assistant."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.7,
+                }
+            )
 
-        output = response.json()
-        plan_text = output[0]["generated_text"] if isinstance(output, list) else output.get("generated_text", "")
+            if response.status_code != 200:
+                return Response({"error": "meal plan generation failed."}, status=500)
 
-        meal_plan = MealPlan.objects.create(user=user, plan_text=plan_text)
-        return Response(MealPlanSerializer(meal_plan).data, status=201)
+            result = response.json()
+            plan_text = result["choices"][0]["message"]["content"]
+
+            meal_plan = MealPlan.objects.create(user=user, plan_text=plan_text)
+            return Response(MealPlanSerializer(meal_plan).data, status=201)
+
+        except Exception as e:
+            return Response({"error": f"request failed: {str(e)}"}, status=500)
 
 
 class MealPlanDeleteView(generics.DestroyAPIView):
@@ -117,7 +121,4 @@ class MealPlanDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if not user or not user.is_authenticated:
-            return MealPlan.objects.none()
-        return MealPlan.objects.filter(user=user)
+        return MealPlan.objects.filter(user=self.request.user)
