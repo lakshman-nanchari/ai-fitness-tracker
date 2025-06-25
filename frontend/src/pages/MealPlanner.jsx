@@ -29,7 +29,11 @@ const MealPlanner = () => {
   }, []);
 
   const handleChange = (e) => {
-    setPreferences({ ...preferences, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setPreferences((prev) => ({
+      ...prev,
+      [name]: name === "meals_per_day" ? parseInt(value) : value,
+    }));
   };
 
   const handleGenerate = async () => {
@@ -48,7 +52,7 @@ const MealPlanner = () => {
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/meal/meal-plans/${id}/`);
-      setPlans(plans.filter((plan) => plan.id !== id));
+      setPlans((prev) => prev.filter((plan) => plan.id !== id));
     } catch (err) {
       setError("Failed to delete meal plan.");
     }
@@ -64,14 +68,19 @@ const MealPlanner = () => {
           <h2 className="text-2xl font-semibold text-white">Your Preferences</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
+            <select
               name="diet_type"
-              placeholder="Diet Type (e.g. vegan, keto)"
               className="dark-input"
               value={preferences.diet_type}
               onChange={handleChange}
-            />
+            >
+              <option value="">Select Diet Type</option>
+              <option value="vegan">Vegan</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="indian nonveg">Indian Non-Veg</option>
+              <option value="keto">Keto</option>
+            </select>
+
             <input
               type="number"
               name="calories_per_day"
@@ -80,14 +89,17 @@ const MealPlanner = () => {
               value={preferences.calories_per_day}
               onChange={handleChange}
             />
-            <input
-              type="number"
+
+            <select
               name="meals_per_day"
-              placeholder="Meals per Day"
               className="dark-input"
               value={preferences.meals_per_day}
               onChange={handleChange}
-            />
+            >
+              <option value={3}>3 Meals/Day (Standard)</option>
+              <option value={5}>5 Meals/Day (Includes Snacks)</option>
+            </select>
+
             <input
               type="text"
               name="allergies"
@@ -96,14 +108,18 @@ const MealPlanner = () => {
               value={preferences.allergies}
               onChange={handleChange}
             />
-            <input
-              type="text"
+
+            <select
               name="goal"
-              placeholder="Goal (e.g. lose weight)"
               className="dark-input col-span-1 md:col-span-2"
               value={preferences.goal}
               onChange={handleChange}
-            />
+            >
+              <option value="">Select Goal</option>
+              <option value="weight loss">Weight Loss</option>
+              <option value="muscle gain">Muscle Gain</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
           </div>
 
           <button
@@ -129,35 +145,39 @@ const MealPlanner = () => {
             <p className="text-gray-400 text-center">No meal plans yet. Generate one!</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {plans.map((plan) => {
-                const mealSections = plan.plan_text.split(/(?=Breakfast:|Lunch:|Dinner:)/gi); // split while keeping the keywords
+              {plans.map((plan) => {
+                const mealSections = plan.plan_text.split(/(?=Breakfast:|Lunch:|Dinner:|Snack:|Morning Snack:|Evening Snack:)/gi);
                 return mealSections.map((mealText, index) => {
-                    let label = "";
-                    if (/^Breakfast:/i.test(mealText)) label = "🍳 Breakfast";
-                    else if (/^Lunch:/i.test(mealText)) label = "🥗 Lunch";
-                    else if (/^Dinner:/i.test(mealText)) label = "🍛 Dinner";
-                    else label = `🍽️ Meal ${index + 1}`;
+                  let label = mealText.match(/^[^:]+:/i)?.[0] || `Meal ${index + 1}`;
+                  let emoji = label.toLowerCase().includes("breakfast")
+                    ? "🍳"
+                    : label.toLowerCase().includes("lunch")
+                    ? "🥗"
+                    : label.toLowerCase().includes("dinner")
+                    ? "🍛"
+                    : "🍽️";
 
-                    return (
+                  return (
                     <div
-                        key={`${plan.id}-${index}`}
-                        className="bg-gray-700 border border-gray-600 rounded-2xl shadow-lg p-5 relative hover:scale-[1.01] transition-transform"
+                      key={`${plan.id}-${index}`}
+                      className="bg-gray-700 border border-gray-600 rounded-2xl shadow-lg p-5 relative hover:scale-[1.01] transition-transform"
                     >
-                        <button
+                      <button
                         onClick={() => handleDelete(plan.id)}
                         className="absolute top-3 right-3 text-red-400 hover:text-red-600"
-                        >
+                      >
                         <Trash2 className="w-5 h-5" />
-                        </button>
-                        <h3 className="text-lg font-semibold text-purple-300 mb-2">{label}</h3>
-                        <pre className="whitespace-pre-wrap text-sm text-white/90 bg-gray-800 p-3 rounded-md leading-relaxed">
+                      </button>
+                      <h3 className="text-lg font-semibold text-purple-300 mb-2">
+                        {emoji} {label.replace(":", "")}
+                      </h3>
+                      <pre className="whitespace-pre-wrap text-sm text-white/90 bg-gray-800 p-3 rounded-md leading-relaxed">
                         {mealText.trim()}
-                        </pre>
+                      </pre>
                     </div>
-                    );
+                  );
                 });
-                })}
-
+              })}
             </div>
           )}
         </div>
