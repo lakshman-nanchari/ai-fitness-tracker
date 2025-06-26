@@ -6,7 +6,7 @@ import requests
 
 from .models import MealPreference, MealPlan
 from .serializers import MealPreferenceSerializer, MealPlanSerializer
-
+from .urls import calculate_calories
 
 class MealPreferenceView(generics.RetrieveUpdateAPIView):
     serializer_class = MealPreferenceSerializer
@@ -32,16 +32,30 @@ class MealPlanListCreateView(APIView):
         data = request.data
         profile = getattr(user, 'profile', None)
 
-        # Get or create preferences
         prefs, _ = MealPreference.objects.get_or_create(user=user)
 
-        # Merge with request data
         diet_type = data.get('diet_type') or prefs.diet_type
         goal = data.get('goal') or prefs.goal
         allergies = data.get('allergies') or prefs.allergies or "none"
-        calories = data.get('calories_per_day') or prefs.calories_per_day
         meals_per_day = int(data.get('meals_per_day', prefs.meals_per_day or 3))
         location = data.get('location') or prefs.location or "India"
+
+        # 📌 Calculate calories if missing
+        calories = data.get('calories_per_day') or prefs.calories_per_day
+        if not calories:
+            if profile and profile.age and profile.gender and profile.height_cm and profile.weight_kg:
+                calories = calculate_calories(
+                    age=profile.age,
+                    gender=profile.gender,
+                    height_cm=profile.height_cm,
+                    weight_kg=profile.weight_kg,
+                    goal=goal
+                )
+            else:
+                return Response(
+                    {"error": "Missing calories and incomplete profile (age, gender, height, weight)."},
+                    status=400
+                )
 
         if not all([diet_type, goal, calories]):
             return Response({"error": "Missing diet_type, goal or calories"}, status=400)
@@ -58,7 +72,6 @@ class MealPlanListCreateView(APIView):
             else ["Breakfast", "Morning Snack", "Lunch", "Evening Snack", "Dinner"]
         )
 
-        # AI prompt with location awareness
         prompt = (
             f"Create a {meals_per_day}-meal {diet_type} diet plan for a {profile.age}-year-old "
             f"{profile.gender.lower()} from {location} who wants to {goal.lower()}. "
@@ -100,7 +113,6 @@ class MealPlanListCreateView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-
 
 class MealPlanDeleteView(generics.DestroyAPIView):
     serializer_class = MealPlanSerializer
