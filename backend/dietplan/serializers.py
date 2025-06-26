@@ -4,7 +4,7 @@ from .models import MealPreference, MealPlan
 class MealPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealPreference
-        fields = '__all__'
+        fields = ['diet_type', 'meals_per_day', 'allergies', 'location']
         read_only_fields = ['user']
 
 
