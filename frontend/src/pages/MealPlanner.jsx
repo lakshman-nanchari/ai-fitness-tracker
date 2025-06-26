@@ -18,7 +18,7 @@ const MealPlanner = () => {
   const fetchPlans = async () => {
     setError("");
     try {
-      const res = await axios.get("/api/meal/meal-plans/");
+      const res = await axios.get("/api/diet/meal-plans/");
       setPlans(res.data);
     } catch (err) {
       setError("Failed to load meal plans.");
@@ -27,18 +27,31 @@ const MealPlanner = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setPreferences((prev) => ({
-      ...prev,
+    const updated = {
+      ...preferences,
       [name]: name === "meals_per_day" ? parseInt(value) : value,
-    }));
+    };
+
+    if (name === "diet_type") {
+      const defaultCalories = {
+        vegan: 1800,
+        vegetarian: 2000,
+        "indian nonveg": 2200,
+        keto: 2100,
+        "non-veg": 1900,
+      };
+      updated.calories_per_day = defaultCalories[value.toLowerCase()] || "";
+    }
+
+    setPreferences(updated);
   };
 
   const handleGenerate = async () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("/api/meal/meal-plans/", preferences);
-      fetchPlans(); // ✅ fetch plans only after generating
+      await axios.post("/api/diet/meal-plans/", preferences);
+      fetchPlans();
     } catch (err) {
       setError("Failed to generate meal plan.");
     } finally {
@@ -48,7 +61,7 @@ const MealPlanner = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/meal/meal-plans/${id}/`);
+      await axios.delete(`/api/diet/meal-plans/${id}/`);
       setPlans((prev) => prev.filter((plan) => plan.id !== id));
     } catch (err) {
       setError("Failed to delete meal plan.");
@@ -65,23 +78,44 @@ const MealPlanner = () => {
           <h2 className="text-2xl font-semibold text-white">Your Preferences</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <select
-              name="diet_type"
-              className="dark-input"
-              value={preferences.diet_type}
-              onChange={handleChange}
-            >
-              <option value="">Select Diet Type</option>
-              <option value="vegan">Vegan</option>
-              <option value="vegetarian">Vegetarian</option>
-              <option value="indian nonveg">Indian Non-Veg</option>
-              <option value="keto">Keto</option>
-            </select>
+            <div className="space-y-2">
+              <input
+                name="diet_type"
+                placeholder="Diet Type (e.g. vegan, keto)"
+                className="dark-input"
+                value={preferences.diet_type}
+                onChange={handleChange}
+              />
+              <select
+                className="dark-input"
+                onChange={(e) =>
+                  setPreferences((prev) => ({
+                    ...prev,
+                    diet_type: e.target.value,
+                    calories_per_day:
+                      {
+                        vegan: 1800,
+                        vegetarian: 2000,
+                        "indian nonveg": 2200,
+                        "non-veg": 1900,
+                        keto: 2100,
+                      }[e.target.value] || "",
+                  }))
+                }
+              >
+                <option value="">Choose a Diet (optional)</option>
+                <option value="vegan">Vegan</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="indian nonveg">Indian Non-Veg</option>
+                <option value="non-veg">Non-Veg</option>
+                <option value="keto">Keto</option>
+              </select>
+            </div>
 
             <input
               type="number"
               name="calories_per_day"
-              placeholder="Calories per Day (e.g. 2000)"
+              placeholder="Calories per Day"
               className="dark-input"
               value={preferences.calories_per_day}
               onChange={handleChange}
@@ -149,41 +183,51 @@ const MealPlanner = () => {
         {plans.length > 0 && (
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold mb-4 text-white">Your Saved Plans</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {plans.map((plan) => {
-                const mealSections = plan.plan_text.split(
-                  /(?=Breakfast:|Lunch:|Dinner:|Snack:|Morning Snack:|Evening Snack:)/gi
-                );
-                return mealSections.map((mealText, index) => {
-                  let label = mealText.match(/^[^:]+:/i)?.[0] || `Meal ${index + 1}`;
-                  let emoji = label.toLowerCase().includes("breakfast")
-                    ? "🍳"
-                    : label.toLowerCase().includes("lunch")
-                    ? "🥗"
-                    : label.toLowerCase().includes("dinner")
-                    ? "🍛"
-                    : "🍽️";
+                const sections = plan.plan_text.split(/\n(?=\*\*.*\*\*:)/g);
 
-                  return (
-                    <div
-                      key={`${plan.id}-${index}`}
-                      className="bg-gray-700 border border-gray-600 rounded-2xl shadow-lg p-5 relative hover:scale-[1.01] transition-transform"
+                return (
+                  <div
+                    key={plan.id}
+                    className="bg-gray-800 border border-gray-600 rounded-2xl shadow-xl p-6 relative space-y-4"
+                  >
+                    <button
+                      onClick={() => handleDelete(plan.id)}
+                      className="absolute top-3 right-3 text-red-400 hover:text-red-600"
                     >
-                      <button
-                        onClick={() => handleDelete(plan.id)}
-                        className="absolute top-3 right-3 text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                      <h3 className="text-lg font-semibold text-purple-300 mb-2">
-                        {emoji} {label.replace(":", "")}
-                      </h3>
-                      <pre className="whitespace-pre-wrap text-sm text-white/90 bg-gray-800 p-3 rounded-md leading-relaxed">
-                        {mealText.trim()}
-                      </pre>
-                    </div>
-                  );
-                });
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+
+                    {sections.map((section, index) => {
+                      const match = section.match(/\*\*(.*?)\*\*:/);
+                      const title = match ? match[1] : `Meal ${index + 1}`;
+                      const emoji = title.toLowerCase().includes("breakfast")
+                        ? "🍳"
+                        : title.toLowerCase().includes("lunch")
+                        ? "🥗"
+                        : title.toLowerCase().includes("dinner")
+                        ? "🍛"
+                        : title.toLowerCase().includes("snack")
+                        ? "🍪"
+                        : "🍽️";
+
+                      return (
+                        <div
+                          key={`${plan.id}-${index}`}
+                          className="bg-gray-700 border border-gray-500 rounded-xl p-4"
+                        >
+                          <h3 className="text-md font-semibold text-purple-300 mb-2">
+                            {emoji} {title}
+                          </h3>
+                          <pre className="whitespace-pre-wrap text-sm text-white/90 bg-gray-900 p-3 rounded-md leading-relaxed">
+                            {section.trim()}
+                          </pre>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
               })}
             </div>
           </div>
