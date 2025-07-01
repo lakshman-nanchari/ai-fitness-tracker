@@ -54,6 +54,15 @@ const MealPlanner = () => {
     }
   };
 
+  const getEmoji = (title) => {
+    title = title.toLowerCase();
+    if (title.includes("breakfast")) return "🍳";
+    if (title.includes("lunch")) return "🥗";
+    if (title.includes("dinner")) return "🍛";
+    if (title.includes("snack")) return "🍪";
+    return "🍽️";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900 text-white p-6">
       <div className="max-w-6xl mx-auto space-y-10">
@@ -61,7 +70,7 @@ const MealPlanner = () => {
 
         {/* Preferences Form */}
         <div className="bg-gray-800 shadow-xl rounded-2xl p-8 space-y-6 border border-gray-700">
-          <h2 className="text-2xl font-semibold text-white">Your Preferences</h2>
+          <h2 className="text-2xl font-semibold">Your Preferences</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select
@@ -70,7 +79,7 @@ const MealPlanner = () => {
               value={preferences.diet_type}
               onChange={handleChange}
             >
-              <option value="">Choose a Diet (optional)</option>
+              <option value="">Choose a Diet Type (optional)</option>
               <option value="vegan">Vegan</option>
               <option value="vegetarian">Vegetarian</option>
               <option value="indian nonveg">Indian Non-Veg</option>
@@ -107,7 +116,6 @@ const MealPlanner = () => {
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex flex-col md:flex-row gap-4">
             <button
               onClick={handleGenerate}
@@ -134,10 +142,10 @@ const MealPlanner = () => {
           {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
         </div>
 
-        {/* Plan Display or Loading Skeletons */}
+        {/* Meal Plan Display */}
         {loading ? (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4 text-white">Generating Your Plan...</h2>
+            <h2 className="text-2xl font-semibold text-white">Generating Your Plan...</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[1, 2, 3].map((s) => (
                 <div
@@ -151,48 +159,65 @@ const MealPlanner = () => {
               ))}
             </div>
           </div>
-        ) : (
-          plan && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-semibold mb-4 text-white">Your Saved Plan</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-800 border border-gray-600 rounded-2xl shadow-xl p-6 relative space-y-4">
-                  <button
-                    onClick={() => handleDelete(plan.id)}
-                    className="absolute top-3 right-3 text-red-400 hover:text-red-600"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+        ) : plan && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-white">Your Saved Plan</h2>
 
-                  {Object.entries(plan.meals).map(([title, content], index) => {
-                    const emoji = title.toLowerCase().includes("breakfast")
-                      ? "🍳"
-                      : title.toLowerCase().includes("lunch")
-                      ? "🥗"
-                      : title.toLowerCase().includes("dinner")
-                      ? "🍛"
-                      : title.toLowerCase().includes("snack")
-                      ? "🍪"
-                      : "🍽️";
-
-                    return (
-                      <div
-                        key={`${plan.id}-${index}`}
-                        className="bg-gray-700 border border-gray-500 rounded-xl p-4"
-                      >
-                        <h3 className="text-md font-semibold text-purple-300 mb-2">
-                          {emoji} {title}
-                        </h3>
-                        <pre className="whitespace-pre-wrap text-sm text-white/90 bg-gray-900 p-3 rounded-md leading-relaxed">
-                          {content.trim()}
-                        </pre>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => handleDelete(plan.id)}
+                className="text-sm text-red-400 hover:text-red-600 flex items-center"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete Plan
+              </button>
             </div>
-          )
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {plan.meals && Object.entries(plan.meals).map(([title, content], index) => {
+                const emoji = getEmoji(title);
+
+                // Parse content (simple extractor)
+                const lines = content.split("\n").map((line) => line.trim());
+                const calories = lines.find((l) => l.toLowerCase().startsWith("calories")) || "";
+                const ingredients = lines.find((l) => l.toLowerCase().startsWith("ingredients")) || "";
+                const instructions = lines.find((l) => l.toLowerCase().startsWith("instructions")) || content;
+
+                return (
+                  <div
+                    key={`${plan.id}-${index}`}
+                    className="bg-gray-800 border border-gray-600 rounded-2xl shadow-xl p-6 space-y-4"
+                  >
+                    <h3 className="text-lg font-semibold text-purple-300">
+                      {emoji} {title}
+                    </h3>
+
+                    {calories && (
+                      <p className="text-sm text-white/80">
+                        <span className="font-semibold text-green-400">Calories:</span>{" "}
+                        {calories.replace(/calories:\s*/i, "")}
+                      </p>
+                    )}
+
+                    {ingredients && (
+                      <p className="text-sm text-white/80">
+                        <span className="font-semibold text-blue-400">Ingredients:</span>{" "}
+                        {ingredients.replace(/ingredients:\s*/i, "")}
+                      </p>
+                    )}
+
+                    {instructions && (
+                      <p className="text-sm text-white/90 leading-relaxed">
+                        <span className="font-semibold text-yellow-400 block mb-1">Preparation:</span>
+                        {instructions.replace(/instructions:\s*/i, "")}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+
+            </div>
+          </div>
         )}
       </div>
     </div>
