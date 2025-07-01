@@ -42,6 +42,39 @@ class MealPreferenceView(generics.RetrieveUpdateAPIView):
         serializer.save(user=self.request.user)
 
 
+# ----------------------------
+# Helper functions
+# ----------------------------
+
+def process_meal_block(lines):
+    ingredients = []
+    instructions = []
+    calories = None
+    section = "ingredients"
+
+    for line in lines:
+        if line.strip() == "":
+            if section == "ingredients":
+                section = "instructions"
+            continue
+
+        calorie_match = re.search(r"calories\s*[:\-]?\s*(\d+)", line.lower())
+        if calorie_match:
+            calories = int(calorie_match.group(1))
+            continue
+
+        if section == "ingredients":
+            ingredients.append(line)
+        else:
+            instructions.append(line)
+
+    return {
+        "ingredients": "\n".join(ingredients).strip(),
+        "instructions": "\n".join(instructions).strip(),
+        "calories": calories
+    }
+
+
 def extract_meals(plan_text, meals_per_day):
     meal_labels = (
         ["Breakfast", "Lunch", "Dinner"]
@@ -49,32 +82,40 @@ def extract_meals(plan_text, meals_per_day):
         else ["Breakfast", "Morning Snack", "Lunch", "Evening Snack", "Dinner"]
     )
     label_set = {label.lower(): label for label in meal_labels}
-    extracted = {}
+    structured = {}
     current_label = None
+    buffer = []
 
     lines = plan_text.splitlines()
 
     for line in lines:
         line = line.strip()
         if not line:
+            buffer.append("")
             continue
 
         match = re.match(r"^([A-Za-z\s]+?)[:\-]?$", line)
         if match:
             label_candidate = match.group(1).strip().lower()
             if label_candidate in label_set:
+                if current_label and buffer:
+                    structured[current_label] = process_meal_block(buffer)
                 current_label = label_set[label_candidate]
-                extracted[current_label] = []
+                buffer = []
                 continue
 
         if current_label:
-            extracted[current_label].append(line)
+            buffer.append(line)
 
-    return {
-        meal: "\n".join(content).strip()
-        for meal, content in extracted.items()
-    }
+    if current_label and buffer:
+        structured[current_label] = process_meal_block(buffer)
 
+    return structured
+
+
+# ----------------------------
+# Meal Plan Views
+# ----------------------------
 
 class MealPlanListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -96,6 +137,9 @@ class MealPlanListCreateView(APIView):
         return Response({
             "id": latest_plan.id,
             "meals": structured_plan,
+            "total_calories": sum(
+                meal.get("calories", 0) for meal in structured_plan.values() if isinstance(meal, dict)
+            ),
             "created_at": latest_plan.created_at,
         })
 
@@ -154,8 +198,8 @@ class MealPlanListCreateView(APIView):
             f"Use culturally relevant foods from {location}.\n\n"
             f"Return the plan in plain text with these exact headings:\n\n" +
             "\n".join(meal_labels) +
-            "\n\nEach heading should be followed by a simple list of food items and clear preparation instructions. "
-            f"Do not include bullet points, numbering, or any special characters. Just use clear headings and normal lines."
+            "\n\nEach heading should be followed by a list of ingredients, then preparation instructions, then 'Calories: 350'. "
+            f"Use plain formatting with no special characters or bullet points."
         )
 
         try:
@@ -190,6 +234,9 @@ class MealPlanListCreateView(APIView):
             return Response({
                 "id": meal_plan.id,
                 "meals": structured_plan,
+                "total_calories": sum(
+                    meal.get("calories", 0) for meal in structured_plan.values() if isinstance(meal, dict)
+                ),
                 "created_at": meal_plan.created_at,
             }, status=201)
 
