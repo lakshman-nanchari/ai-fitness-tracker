@@ -66,7 +66,7 @@ const MealPlanner = () => {
   return (
     <div className="min-h-screen bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900 text-white p-6">
       <div className="max-w-6xl mx-auto space-y-10">
-        <h1 className="text-4xl font-bold text-center">🥗 AI-Powered Meal Planner</h1>
+        <h1 className="text-4xl font-bold text-center">🥗 Meal Planner</h1>
 
         {/* Preferences Form */}
         <div className="bg-gray-800 shadow-xl rounded-2xl p-8 space-y-6 border border-gray-700">
@@ -173,50 +173,73 @@ const MealPlanner = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {plan.meals && Object.entries(plan.meals).map(([title, content], index) => {
-                const emoji = getEmoji(title);
+            {(() => {
+              const mealEntries = Object.entries(plan.meals).filter(([title]) => title !== "total_calories");
+              let extractedNote = "";
 
-                // Parse content (simple extractor)
-                const lines = content.split("\n").map((line) => line.trim());
-                const calories = lines.find((l) => l.toLowerCase().startsWith("calories")) || "";
-                const ingredients = lines.find((l) => l.toLowerCase().startsWith("ingredients")) || "";
-                const instructions = lines.find((l) => l.toLowerCase().startsWith("instructions")) || content;
+              // Extract note from any meal instruction
+              mealEntries.forEach(([title, meal]) => {
+                if (typeof meal?.instructions === "string") {
+                  const noteMatch = meal.instructions.match(/(Note:.*)$/i);
+                  if (noteMatch) {
+                    extractedNote = noteMatch[1];
+                    meal.instructions = meal.instructions.replace(noteMatch[1], "").trim();
+                  }
+                }
+              });
 
-                return (
-                  <div
-                    key={`${plan.id}-${index}`}
-                    className="bg-gray-800 border border-gray-600 rounded-2xl shadow-xl p-6 space-y-4"
-                  >
-                    <h3 className="text-lg font-semibold text-purple-300">
-                      {emoji} {title}
-                    </h3>
+              return (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {mealEntries.map(([title, meal], index) => {
+                      const emoji = getEmoji(title);
+                      return (
+                        <div
+                          key={`${plan.id}-${index}`}
+                          className="bg-gray-800 border border-gray-600 rounded-2xl shadow-xl p-6 space-y-4"
+                        >
+                          <h3 className="text-lg font-semibold text-purple-300">
+                            {emoji} {title}
+                          </h3>
 
-                    {calories && (
-                      <p className="text-sm text-white/80">
-                        <span className="font-semibold text-green-400">Calories:</span>{" "}
-                        {calories.replace(/calories:\s*/i, "")}
-                      </p>
-                    )}
+                          {meal.calories && (
+                            <p className="text-sm text-white/80">
+                              <span className="font-semibold text-green-400">Calories:</span> {meal.calories}
+                            </p>
+                          )}
 
-                    {ingredients && (
-                      <p className="text-sm text-white/80">
-                        <span className="font-semibold text-blue-400">Ingredients:</span>{" "}
-                        {ingredients.replace(/ingredients:\s*/i, "")}
-                      </p>
-                    )}
+                          {meal.ingredients && (
+                            <p className="text-sm text-white/80">
+                              <span className="font-semibold text-blue-400">Ingredients:</span> {meal.ingredients}
+                            </p>
+                          )}
 
-                    {instructions && (
-                      <p className="text-sm text-white/90 leading-relaxed">
-                        <span className="font-semibold text-yellow-400 block mb-1">Preparation:</span>
-                        {instructions.replace(/instructions:\s*/i, "")}
-                      </p>
-                    )}
+                          {meal.instructions && (
+                            <p className="text-sm text-white/90 leading-relaxed">
+                              <span className="font-semibold text-yellow-400 block mb-1">Preparation:</span>
+                              {meal.instructions}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
 
-            </div>
+                  {extractedNote && (
+                    <div className="bg-yellow-900/40 border border-yellow-600 rounded-xl p-5 mt-6 shadow-lg text-sm text-yellow-100">
+                      <strong className="block mb-2 text-yellow-300">📌 Note:</strong>
+                      <p>{extractedNote}</p>
+                    </div>
+                  )}
+
+                  {plan.meals?.total_calories && (
+                    <p className="text-right text-sm text-white/70 mt-4">
+                      <span className="font-semibold text-pink-400">Total Calories:</span> {plan.meals.total_calories}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
