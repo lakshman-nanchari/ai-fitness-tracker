@@ -18,14 +18,18 @@ class MealPreferenceView(generics.RetrieveUpdateAPIView):
 
     @swagger_auto_schema(
         operation_summary="Get user's meal preferences",
-        operation_description="Retrieves the current user's meal preference data such as diet type, allergies, location, and meals per day."
+        operation_description="Retrieves the current user's meal preference data.",
+        responses={200: MealPreferenceSerializer},
+        tags=["Meal Preferences"]
     )
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_summary="Update user's meal preferences",
-        operation_description="Updates the current user's meal preference fields like diet type, allergies, location, and meals per day."
+        operation_description="Updates the current user's meal preference fields.",
+        responses={200: MealPreferenceSerializer},
+        tags=["Meal Preferences"]
     )
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
@@ -38,7 +42,6 @@ class MealPreferenceView(generics.RetrieveUpdateAPIView):
         serializer.save(user=self.request.user)
 
 
-#  Updated parser that handles **Bolded** markdown headers and meal sections
 def extract_meals(plan_text, meals_per_day):
     meal_labels = (
         ["Breakfast", "Lunch", "Dinner"]
@@ -56,8 +59,7 @@ def extract_meals(plan_text, meals_per_day):
         if not line:
             continue
 
-        # Matches "**Breakfast:**", "Breakfast:", etc.
-        match = re.match(r"^\**\*?([A-Za-z\s]+?)\*?\**[:\-]?\s*$", line)
+        match = re.match(r"^([A-Za-z\s]+?)[:\-]?$", line)
         if match:
             label_candidate = match.group(1).strip().lower()
             if label_candidate in label_set:
@@ -79,8 +81,9 @@ class MealPlanListCreateView(APIView):
 
     @swagger_auto_schema(
         operation_summary="Get latest meal plan",
-        operation_description="Retrieves the most recent meal plan generated for the user.",
-        responses={200: MealPlanSerializer()}
+        operation_description="Retrieves the most recent meal plan for the user.",
+        responses={200: openapi.Response("Meal plan retrieved", MealPlanSerializer)},
+        tags=["Meal Plans"]
     )
     def get(self, request):
         latest_plan = MealPlan.objects.filter(user=request.user).order_by('-created_at').first()
@@ -98,7 +101,7 @@ class MealPlanListCreateView(APIView):
 
     @swagger_auto_schema(
         operation_summary="Generate a new meal plan",
-        operation_description="Generates a personalized meal plan based on user preferences and profile data.",
+        operation_description="Generates a personalized meal plan based on user preferences.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
@@ -108,7 +111,8 @@ class MealPlanListCreateView(APIView):
                 "location": openapi.Schema(type=openapi.TYPE_STRING),
             }
         ),
-        responses={201: MealPlanSerializer()}
+        responses={201: openapi.Response("Meal plan created", MealPlanSerializer)},
+        tags=["Meal Plans"]
     )
     def post(self, request):
         user = request.user
@@ -146,11 +150,12 @@ class MealPlanListCreateView(APIView):
         prompt = (
             f"Create a {meals_per_day}-meal {diet_type} diet plan for a {profile.age}-year-old "
             f"{profile.gender.lower()} from {location} who wants to {goal.replace('_', ' ')}. "
-            f"Daily calories should be ~{calories}. Avoid allergens: {allergies}. "
-            f"Use culturally relevant foods from {location}.\n"
-            f"Label each meal like:\n\n" +
-            "\n".join(f"{label}:" for label in meal_labels) +
-            "\n\nInclude calories per meal and prep instructions. Format as readable text."
+            f"Daily calories should be around {calories}. Avoid allergens: {allergies}. "
+            f"Use culturally relevant foods from {location}.\n\n"
+            f"Return the plan in plain text with these exact headings:\n\n" +
+            "\n".join(meal_labels) +
+            "\n\nEach heading should be followed by a simple list of food items and clear preparation instructions. "
+            f"Do not include bullet points, numbering, or any special characters. Just use clear headings and normal lines."
         )
 
         try:
@@ -198,8 +203,9 @@ class MealPlanDeleteView(generics.DestroyAPIView):
 
     @swagger_auto_schema(
         operation_summary="Delete a meal plan",
-        operation_description="Deletes a meal plan belonging to the authenticated user by ID.",
-        responses={204: "Meal plan deleted"}
+        operation_description="Deletes a meal plan belonging to the authenticated user.",
+        responses={204: "Meal plan deleted successfully", 404: "Not found"},
+        tags=["Meal Plans"]
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
