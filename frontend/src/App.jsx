@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import LoginSuccess from './pages/LoginSuccess';
 import UserProfile from './pages/UserProfile';
 import MealPlanner from './pages/MealPlanner';
+import FitnessGoalPage from './pages/UserProfile/FitnessGoalPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -19,6 +20,7 @@ function App() {
         <Route path="/login-success" element={<LoginSuccess />} /> 
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/meal-planner" element={<MealPlanner />} />
+        <Route path="/fitness-goals" element={<FitnessGoalPage />} />
       </Routes>
 
       {/* ✅ Toast Container to show success/error messages */}

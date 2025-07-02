@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
-import { UserCircle, BarChart3, Settings } from "lucide-react";
+import { UserCircle, BarChart3, Settings, CheckCircle } from "lucide-react";
 import OverviewTab from "./OverviewTab";
 import EditProfileTab from "./EditProfileTab";
 import StatsTab from "./StatsTab";
+import FitnessGoalPage from "./FitnessGoalPage";
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -19,8 +20,9 @@ const UserProfile = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    axios.get("/api/users/profile/")
-      .then(res => {
+    axios
+      .get("/api/users/profile/")
+      .then((res) => {
         const { username, email, ...profile } = res.data || {};
         setUser({ username, email });
         setForm(profile);
@@ -28,7 +30,8 @@ const UserProfile = () => {
       .catch(() => setError("Failed to load profile."));
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,28 +47,49 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-black text-gray-900 dark:text-white flex">
-      
       {/* Sidebar */}
       <aside className="w-64 bg-white dark:bg-gray-900 shadow-xl p-6 hidden md:flex flex-col">
         <h2 className="text-2xl font-bold mb-6">FitTrack</h2>
         <nav className="space-y-4">
           <button
             onClick={() => setActiveTab("profile")}
-            className={`flex items-center gap-3 p-2 rounded-md ${activeTab === "profile" ? 'bg-green-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            className={`flex items-center gap-3 p-2 rounded-md ${
+              activeTab === "profile"
+                ? "bg-green-500 text-white"
+                : "hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
           >
             <UserCircle /> Profile
           </button>
           <button
             onClick={() => setActiveTab("edit")}
-            className={`flex items-center gap-3 p-2 rounded-md ${activeTab === "edit" ? 'bg-green-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            className={`flex items-center gap-3 p-2 rounded-md ${
+              activeTab === "edit"
+                ? "bg-green-500 text-white"
+                : "hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
           >
             <Settings /> Edit
           </button>
           <button
             onClick={() => setActiveTab("stats")}
-            className={`flex items-center gap-3 p-2 rounded-md ${activeTab === "stats" ? 'bg-green-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            className={`flex items-center gap-3 p-2 rounded-md ${
+              activeTab === "stats"
+                ? "bg-green-500 text-white"
+                : "hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
           >
             <BarChart3 /> Progress
+          </button>
+          <button
+            onClick={() => setActiveTab("goals")}
+            className={`flex items-center gap-3 p-2 rounded-md ${
+              activeTab === "goals"
+                ? "bg-green-500 text-white"
+                : "hover:bg-gray-100 dark:hover:bg-gray-800"
+            }`}
+          >
+            <CheckCircle /> Goals
           </button>
         </nav>
       </aside>
@@ -85,6 +109,7 @@ const UserProfile = () => {
           />
         )}
         {activeTab === "stats" && <StatsTab />}
+        {activeTab === "goals" && <FitnessGoalPage />}
       </main>
     </div>
   );
