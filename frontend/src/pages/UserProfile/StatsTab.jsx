@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend, Label
+  ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from "recharts";
 import { Flame, Droplet, Moon, Footprints } from "lucide-react";
 
@@ -49,7 +49,7 @@ const icons = {
   sleep_hours: <Moon className="w-4 h-4 inline mr-1" />,
 };
 
-const PIE_COLORS = ["#22c55e", "#f59e0b", "#8b5cf6", "#3b82f6"];
+const PIE_COLORS = ["#10b981", "#f59e0b", "#8b5cf6", "#3b82f6"]; // emerald, amber, violet, blue
 
 const ProgressCard = ({ metric, value, target }) => {
   const percent = Math.min((value / target) * 100, 100);
@@ -57,12 +57,14 @@ const ProgressCard = ({ metric, value, target }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md text-center">
-      <div className="text-sm font-medium mb-2">{icons[metric]} {label}</div>
-      <div className="text-2xl font-bold text-blue-600">{value}</div>
-      <div className="text-xs text-gray-500 mb-1">Goal: {target}</div>
+      <div className="text-sm font-medium mb-2 text-gray-800 dark:text-gray-200">
+        {icons[metric]} {label}
+      </div>
+      <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{value}</div>
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Goal: {target}</div>
       <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
         <div
-          className="h-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full"
+          className="h-2 bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -71,7 +73,7 @@ const ProgressCard = ({ metric, value, target }) => {
 };
 
 const Info = ({ label, value }) => (
-  <div className="flex justify-between text-sm py-1">
+  <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300 py-1">
     <span>{label}</span>
     <span className="font-semibold">{value}</span>
   </div>
@@ -112,10 +114,8 @@ const StatsTab = () => {
             cx="50%"
             cy="50%"
             outerRadius={100}
-            innerRadius={40}
-            label={({ name, value, percent }) =>
-              `${name}: ${value.toFixed(1)} (${(percent * 100).toFixed(1)}%)`
-            }
+            innerRadius={45}
+            label={({ name, value }) => `${name}: ${value.toFixed(1)}`}
             labelLine={false}
             minAngle={10}
           >
@@ -143,13 +143,11 @@ const StatsTab = () => {
         📊 Your Fitness Dashboard
       </h2>
 
-      {/* Streak Indicator */}
       <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-xl text-center shadow-md">
         <p className="text-lg font-semibold">🔥 5-Day Goal Streak</p>
         <p className="text-sm">Keep it going!</p>
       </div>
 
-      {/* Progress Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Object.keys(TARGETS).map(key => (
           <ProgressCard
@@ -161,15 +159,14 @@ const StatsTab = () => {
         ))}
       </div>
 
-      {/* Tabs */}
       <div className="flex justify-center gap-3 mt-6">
         {["daily", "weekly", "monthly"].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-full font-medium text-sm transition ${
+            className={`px-5 py-2 rounded-full font-medium text-sm transition duration-200 ${
               activeTab === tab
-                ? "bg-blue-600 text-white"
+                ? "bg-emerald-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white"
             }`}
           >
@@ -178,7 +175,6 @@ const StatsTab = () => {
         ))}
       </div>
 
-      {/* Daily Line Chart */}
       {activeTab === "daily" && (
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={dailyData}>
@@ -187,15 +183,14 @@ const StatsTab = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line dataKey="steps" stroke="#22c55e" />
-            <Line dataKey="calories" stroke="#f59e0b" />
-            <Line dataKey="sleep_hours" stroke="#8b5cf6" />
-            <Line dataKey="water_intake_liters" stroke="#3b82f6" />
+            <Line dataKey="steps" stroke="#10b981" strokeWidth={2} />
+            <Line dataKey="calories" stroke="#f59e0b" strokeWidth={2} />
+            <Line dataKey="sleep_hours" stroke="#8b5cf6" strokeWidth={2} />
+            <Line dataKey="water_intake_liters" stroke="#3b82f6" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       )}
 
-      {/* Weekly/Monthly Pie Charts */}
       {activeTab === "weekly" && renderPieChart("weekly")}
       {activeTab === "monthly" && renderPieChart("monthly")}
     </div>
@@ -203,4 +198,3 @@ const StatsTab = () => {
 };
 
 export default StatsTab;
-

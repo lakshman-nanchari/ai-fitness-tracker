@@ -19,38 +19,37 @@ const Home = () => {
         setBgImage("/images/gym/3d-gym-equipment.jpg");
       }
     };
-
-    updateBg(); // Set on initial load
-    window.addEventListener("resize", updateBg); // Update on resize
+    updateBg();
+    window.addEventListener("resize", updateBg);
     return () => window.removeEventListener("resize", updateBg);
   }, []);
 
   return (
-    <div className="bg-white dark:bg-black min-h-screen text-gray-900 dark:text-white transition duration-500">
+    <div className="bg-gray-50 dark:bg-black min-h-screen text-gray-900 dark:text-white transition duration-500">
       {/* Hero Section */}
       <div
         className="relative h-[90vh] bg-cover bg-center flex items-center justify-center px-6"
         style={{ backgroundImage: `url(${bgImage})` }}
       >
-        {/* Theme Toggle Inside Hero */}
         <div className="absolute top-6 right-6">
           <button
             onClick={() => setIsDark(!isDark)}
             className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-md hover:scale-110 transition"
           >
-            {isDark ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-black" />}
+            {isDark ? <FaSun className="text-amber-400" /> : <FaMoon className="text-gray-800" />}
           </button>
         </div>
 
-        {/* Centered Hero Content */}
-        <div className="bg-black/50 p-10 rounded-xl text-center max-w-2xl backdrop-blur-sm">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white">Welcome to FitTrack</h1>
+        <div className="bg-black/50 p-10 rounded-2xl text-center max-w-2xl backdrop-blur-md shadow-lg">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-white">
+            Welcome to <span className="text-emerald-400">FitTrack</span>
+          </h1>
           <p className="text-lg md:text-xl font-light mb-6 text-gray-200">
             Your AI-powered personal trainer and diet planner.
           </p>
           <Link
             to="/auth"
-            className="bg-yellow-400 dark:bg-purple-600 text-black dark:text-white font-semibold py-2 px-6 rounded-full hover:bg-yellow-500 dark:hover:bg-purple-700 transition"
+            className="bg-amber-400 hover:bg-amber-500 text-black font-semibold py-2 px-6 rounded-full transition"
           >
             Get Started
           </Link>
@@ -72,14 +71,14 @@ const Home = () => {
           {features.map(({ title, desc, icon }) => (
             <div
               key={title}
-              className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden transition hover:shadow-xl"
+              className="bg-white dark:bg-gray-900 rounded-xl shadow-lg hover:shadow-xl transition"
             >
               <div
-                className="h-55 bg-cover bg-center"
+                className="h-52 bg-cover bg-center"
                 style={{ backgroundImage: `url(${icon})` }}
               />
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-center text-gray-900 dark:text-white">
+                <h3 className="text-xl font-semibold text-center text-gray-800 dark:text-white">
                   {title}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-center">{desc}</p>

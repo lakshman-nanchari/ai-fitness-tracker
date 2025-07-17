@@ -5,6 +5,14 @@ import OverviewTab from "./OverviewTab";
 import EditProfileTab from "./EditProfileTab";
 import StatsTab from "./StatsTab";
 import FitnessGoalPage from "./FitnessGoalPage";
+import { motion, AnimatePresence } from "framer-motion";
+
+const tabs = [
+  { key: "profile", label: "Profile", icon: <UserCircle /> },
+  { key: "edit", label: "Edit", icon: <Settings /> },
+  { key: "stats", label: "Progress", icon: <BarChart3 /> },
+  { key: "goals", label: "Goals", icon: <CheckCircle /> },
+];
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -49,67 +57,92 @@ const UserProfile = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-black text-gray-900 dark:text-white flex">
       {/* Sidebar */}
       <aside className="w-64 bg-white dark:bg-gray-900 shadow-xl p-6 hidden md:flex flex-col">
-        <h2 className="text-2xl font-bold mb-6">FitTrack</h2>
+        <h2 className="text-3xl font-bold mb-6 text-emerald-600 dark:text-emerald-400">FitTrack</h2>
         <nav className="space-y-4">
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`flex items-center gap-3 p-2 rounded-md ${
-              activeTab === "profile"
-                ? "bg-green-500 text-white"
-                : "hover:bg-gray-100 dark:hover:bg-gray-800"
-            }`}
-          >
-            <UserCircle /> Profile
-          </button>
-          <button
-            onClick={() => setActiveTab("edit")}
-            className={`flex items-center gap-3 p-2 rounded-md ${
-              activeTab === "edit"
-                ? "bg-green-500 text-white"
-                : "hover:bg-gray-100 dark:hover:bg-gray-800"
-            }`}
-          >
-            <Settings /> Edit
-          </button>
-          <button
-            onClick={() => setActiveTab("stats")}
-            className={`flex items-center gap-3 p-2 rounded-md ${
-              activeTab === "stats"
-                ? "bg-green-500 text-white"
-                : "hover:bg-gray-100 dark:hover:bg-gray-800"
-            }`}
-          >
-            <BarChart3 /> Progress
-          </button>
-          <button
-            onClick={() => setActiveTab("goals")}
-            className={`flex items-center gap-3 p-2 rounded-md ${
-              activeTab === "goals"
-                ? "bg-green-500 text-white"
-                : "hover:bg-gray-100 dark:hover:bg-gray-800"
-            }`}
-          >
-            <CheckCircle /> Goals
-          </button>
+          {tabs.map((tab) => (
+            <motion.button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center gap-3 p-2 rounded-md w-full text-left font-medium transition-all duration-300 ${
+                activeTab === tab.key
+                  ? "bg-emerald-500 text-white shadow"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              }`}
+            >
+              {tab.icon} {tab.label}
+            </motion.button>
+          ))}
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
-        <h1 className="text-3xl font-bold mb-4">Welcome, {user.username}</h1>
+      <main className="flex-1 p-6 overflow-x-hidden">
+        <motion.h1
+          className="text-3xl font-bold mb-6 text-gray-800 dark:text-white"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Welcome, {user.username}
+        </motion.h1>
 
-        {activeTab === "profile" && <OverviewTab user={user} form={form} />}
-        {activeTab === "edit" && (
-          <EditProfileTab
-            form={form}
-            onChange={handleChange}
-            onSubmit={handleSubmit}
-            message={message}
-            error={error}
-          />
-        )}
-        {activeTab === "stats" && <StatsTab />}
-        {activeTab === "goals" && <FitnessGoalPage />}
+        <AnimatePresence mode="wait">
+          {activeTab === "profile" && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <OverviewTab user={user} form={form} />
+            </motion.div>
+          )}
+
+          {activeTab === "edit" && (
+            <motion.div
+              key="edit"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <EditProfileTab
+                form={form}
+                onChange={handleChange}
+                onSubmit={handleSubmit}
+                message={message}
+                error={error}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === "stats" && (
+            <motion.div
+              key="stats"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <StatsTab />
+            </motion.div>
+          )}
+
+          {activeTab === "goals" && (
+            <motion.div
+              key="goals"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <FitnessGoalPage />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

@@ -66,16 +66,16 @@ const MealPlanner = () => {
   return (
     <div className="min-h-screen bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900 text-white p-6">
       <div className="max-w-6xl mx-auto space-y-10">
-        <h1 className="text-4xl font-bold text-center">🥗 Meal Planner</h1>
+        <h1 className="text-4xl font-bold text-center text-emerald-400">🥗 Meal Planner</h1>
 
         {/* Preferences Form */}
-        <div className="bg-gray-800 shadow-xl rounded-2xl p-8 space-y-6 border border-gray-700">
-          <h2 className="text-2xl font-semibold">Your Preferences</h2>
+        <div className="bg-gray-800 border border-gray-700 shadow-xl rounded-2xl p-8 space-y-6">
+          <h2 className="text-2xl font-semibold text-white">Your Preferences</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select
               name="diet_type"
-              className="dark-input"
+              className="bg-gray-900 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               value={preferences.diet_type}
               onChange={handleChange}
             >
@@ -89,7 +89,7 @@ const MealPlanner = () => {
 
             <select
               name="meals_per_day"
-              className="dark-input"
+              className="bg-gray-900 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               value={preferences.meals_per_day}
               onChange={handleChange}
             >
@@ -101,7 +101,7 @@ const MealPlanner = () => {
               type="text"
               name="allergies"
               placeholder="Allergies (comma separated)"
-              className="dark-input"
+              className="bg-gray-900 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               value={preferences.allergies}
               onChange={handleChange}
             />
@@ -110,7 +110,7 @@ const MealPlanner = () => {
               type="text"
               name="location"
               placeholder="Location (e.g. India, USA)"
-              className="dark-input"
+              className="bg-gray-900 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               value={preferences.location}
               onChange={handleChange}
             />
@@ -120,7 +120,7 @@ const MealPlanner = () => {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="bg-gradient-to-r from-purple-600 to-indigo-500 text-white font-semibold px-5 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-600 flex items-center justify-center w-full md:w-fit"
+              className="bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-700 hover:to-indigo-600 text-white font-semibold px-6 py-3 rounded-lg flex items-center justify-center w-full md:w-fit transition"
             >
               {loading ? (
                 <Loader2 className="animate-spin h-5 w-5 mr-2" />
@@ -132,7 +132,7 @@ const MealPlanner = () => {
 
             <button
               onClick={fetchPlans}
-              className="bg-gray-700 text-white px-5 py-3 rounded-lg flex items-center justify-center w-full md:w-fit hover:bg-gray-600"
+              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg flex items-center justify-center w-full md:w-fit transition"
             >
               <FolderOpen className="h-5 w-5 mr-2" />
               Load My Saved Plan
@@ -177,7 +177,6 @@ const MealPlanner = () => {
               const mealEntries = Object.entries(plan.meals).filter(([title]) => title !== "total_calories");
               let extractedNote = "";
 
-              // Extract note from any meal instruction
               mealEntries.forEach(([title, meal]) => {
                 if (typeof meal?.instructions === "string") {
                   const noteMatch = meal.instructions.match(/(Note:.*)$/i);
@@ -198,7 +197,7 @@ const MealPlanner = () => {
                           key={`${plan.id}-${index}`}
                           className="bg-gray-800 border border-gray-600 rounded-2xl shadow-xl p-6 space-y-4"
                         >
-                          <h3 className="text-lg font-semibold text-purple-300">
+                          <h3 className="text-lg font-semibold text-amber-300">
                             {emoji} {title}
                           </h3>
 
