@@ -2,6 +2,15 @@ import React, { useState } from "react";
 import axios from "../api/axios";
 import { Loader2, Trash2, Sparkles, FolderOpen } from "lucide-react";
 
+const getEmoji = (title) => {
+  title = title.toLowerCase();
+  if (title.includes("breakfast")) return "🍳";
+  if (title.includes("lunch")) return "🥗";
+  if (title.includes("dinner")) return "🍛";
+  if (title.includes("snack")) return "🍪";
+  return "🍽️";
+};
+
 const MealPlanner = () => {
   const [preferences, setPreferences] = useState({
     diet_type: "",
@@ -54,15 +63,6 @@ const MealPlanner = () => {
     }
   };
 
-  const getEmoji = (title) => {
-    title = title.toLowerCase();
-    if (title.includes("breakfast")) return "🍳";
-    if (title.includes("lunch")) return "🥗";
-    if (title.includes("dinner")) return "🍛";
-    if (title.includes("snack")) return "🍪";
-    return "🍽️";
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900 text-white p-6">
       <div className="max-w-6xl mx-auto space-y-10">
@@ -70,7 +70,7 @@ const MealPlanner = () => {
 
         {/* Preferences Form */}
         <div className="bg-gray-800 border border-gray-700 shadow-xl rounded-2xl p-8 space-y-6">
-          <h2 className="text-2xl font-semibold text-white">Your Preferences</h2>
+          <h2 className="text-2xl font-semibold">Your Preferences</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select
@@ -82,7 +82,7 @@ const MealPlanner = () => {
               <option value="">Choose a Diet Type (optional)</option>
               <option value="vegan">Vegan</option>
               <option value="vegetarian">Vegetarian</option>
-              <option value="indian nonveg">Indian Non-Veg</option>
+              
               <option value="non-veg">Non-Veg</option>
               <option value="keto">Keto</option>
             </select>
@@ -139,13 +139,13 @@ const MealPlanner = () => {
             </button>
           </div>
 
-          {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+          {error && <p className="text-pink-400 text-sm mt-2">{error}</p>}
         </div>
 
         {/* Meal Plan Display */}
         {loading ? (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-white">Generating Your Plan...</h2>
+            <h2 className="text-2xl font-semibold">Generating Your Plan...</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[1, 2, 3].map((s) => (
                 <div
@@ -161,12 +161,12 @@ const MealPlanner = () => {
           </div>
         ) : plan && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-white">Your Saved Plan</h2>
+            <h2 className="text-2xl font-semibold">Your Saved Plan</h2>
 
             <div className="flex justify-end mb-4">
               <button
                 onClick={() => handleDelete(plan.id)}
-                className="text-sm text-red-400 hover:text-red-600 flex items-center"
+                className="text-sm text-pink-400 hover:text-red-500 flex items-center"
               >
                 <Trash2 className="w-4 h-4 mr-1" />
                 Delete Plan
@@ -197,13 +197,13 @@ const MealPlanner = () => {
                           key={`${plan.id}-${index}`}
                           className="bg-gray-800 border border-gray-600 rounded-2xl shadow-xl p-6 space-y-4"
                         >
-                          <h3 className="text-lg font-semibold text-amber-300">
+                          <h3 className="text-lg font-semibold text-cyan-300">
                             {emoji} {title}
                           </h3>
 
                           {meal.calories && (
                             <p className="text-sm text-white/80">
-                              <span className="font-semibold text-green-400">Calories:</span> {meal.calories}
+                              <span className="font-semibold text-emerald-400">Calories:</span> {meal.calories}
                             </p>
                           )}
 
@@ -215,7 +215,7 @@ const MealPlanner = () => {
 
                           {meal.instructions && (
                             <p className="text-sm text-white/90 leading-relaxed">
-                              <span className="font-semibold text-yellow-400 block mb-1">Preparation:</span>
+                              <span className="font-semibold text-purple-300 block mb-1">Preparation:</span>
                               {meal.instructions}
                             </p>
                           )}
@@ -225,8 +225,8 @@ const MealPlanner = () => {
                   </div>
 
                   {extractedNote && (
-                    <div className="bg-yellow-900/40 border border-yellow-600 rounded-xl p-5 mt-6 shadow-lg text-sm text-yellow-100">
-                      <strong className="block mb-2 text-yellow-300">📌 Note:</strong>
+                    <div className="bg-purple-900/40 border border-purple-600 rounded-xl p-5 mt-6 shadow-lg text-sm text-purple-100">
+                      <strong className="block mb-2 text-purple-300">📌 Note:</strong>
                       <p>{extractedNote}</p>
                     </div>
                   )}
